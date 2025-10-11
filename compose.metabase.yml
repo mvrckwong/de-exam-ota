@@ -12,9 +12,11 @@ services:
       - MB_DB_HOST=localhost
       - MB_DB_PORT=5432
     volumes:
+      - metabase_data:/var/lib/metabase
     depends_on:
       - postgres
     restart: always
+
 
   postgres:
     image: postgres:15
