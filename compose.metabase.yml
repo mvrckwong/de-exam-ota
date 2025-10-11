@@ -23,8 +23,6 @@ services:
   postgres:
     image: postgres:15
     container_name: metabase-postgres
-    ports:
-      - "5432:5432"
     environment:
       POSTGRES_USER: metabase
       POSTGRES_PASSWORD: metabase
