@@ -3,6 +3,7 @@ name: metabase
 services:
   metabase:
     image: metabase/metabase:latest
+    container_name: metabase
     ports:
       - "3301:3000"
     environment:
@@ -21,6 +22,9 @@ services:
 
   postgres:
     image: postgres:15
+    container_name: metabase-postgres
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_USER: metabase
       POSTGRES_PASSWORD: metabase
