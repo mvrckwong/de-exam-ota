@@ -1,0 +1,10 @@
+{
+    "editor.fontFamily": "'JetBrains Light', 'Fira Code Light', Consolas, 'Courier New', monospace",
+    "editor.fontSize": 18,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "dbt.enableNewLineagePanel": true,
+    "editor.renderWhitespace": "boundary",
+    "editor.guides.indentation": true
+}
