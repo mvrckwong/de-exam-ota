@@ -1,0 +1,12 @@
+version: 3
+
+vars:
+  SUDO: '{{if eq OS "linux"}}sudo {{end}}'
+  COMPOSE_MB_FILE: compose.metabase.yml
+
+tasks:
+  deploy_metabase:
+    description: "Deploy the metabase server"
+    cmds:
+      - '{{.SUDO}}docker compose -f {{.COMPOSE_MB_FILE}} down'
+      - '{{.SUDO}}docker compose -f {{.COMPOSE_MB_FILE}} up -d --build --remove-orphans --force-recreate'
