@@ -3,6 +3,7 @@ version: 3
 vars:
   SUDO: '{{if eq OS "linux"}}sudo {{end}}'
   COMPOSE_MB_FILE: compose.metabase.yml
+  COMPOSE_AIRFLOW_FILE: compose.airflow.yml
 
 tasks:
   deploy_metabase:
@@ -10,3 +11,9 @@ tasks:
     cmds:
       - '{{.SUDO}}docker compose -f {{.COMPOSE_MB_FILE}} down'
       - '{{.SUDO}}docker compose -f {{.COMPOSE_MB_FILE}} up -d --build --remove-orphans --force-recreate'
+
+  deploy_airflow:
+    description: "Deploy the airflow server"
+    cmds:
+      - '{{.SUDO}}docker compose -f {{.COMPOSE_AIRFLOW_FILE}} down'
+      - '{{.SUDO}}docker compose -f {{.COMPOSE_AIRFLOW_FILE}} up -d --build --remove-orphans --force-recreate'
