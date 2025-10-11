@@ -16,7 +16,7 @@ services:
     depends_on:
       - postgres
     restart: always
-
+    network_mode: bridge
 
   postgres:
     image: postgres:15
