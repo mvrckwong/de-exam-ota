@@ -53,8 +53,6 @@ x-airflow-common:
         - ${AIRFLOW_PROJ_DIR}/logs:${AIRFLOW_HOME}/logs
     user: 
         "${AIRFLOW_UID:-50000}:0"
-    env_file:
-        - stack.env
     depends_on:
         &airflow-common-depends-on
         redis:
