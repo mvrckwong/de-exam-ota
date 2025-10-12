@@ -1,0 +1,29 @@
+[project]
+name = "multipay-data-engineering-workflow"
+version = "0.1.0"
+description = "Data engineering workflow that focus on connecting data sources, transforming data, and loading it into a data warehouse."
+readme = "README.md"
+requires-python = ">=3.11"
+
+# Core Docker Dependencies
+# These dependencies are required for the core functionality of the package.
+dependencies = [
+    "ansi>=0.3.7",
+    "apache-airflow-providers-airbyte>=5.0.2",
+    "apache-airflow-providers-amazon>=9.4.0",
+    "apache-airflow-providers-http>=5.2.2",
+    "apache-airflow-providers-postgres>=6.1.3",
+    "apache-airflow[google]>=3.1.0",
+    "jinja2>=3.1.0",
+    "polars==1.27.1",
+    "pydantic>=2.11.3",
+    "xmlsec>=1.3.14",
+]
+
+# Optional Dependencies
+# These dependencies are optional and can be installed based on the user's needs.
+[dependency-groups]
+scripts = [
+    "cryptography>=44.0.2",
+    "loguru>=0.7.3",
+]
