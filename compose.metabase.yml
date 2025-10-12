@@ -11,7 +11,7 @@ services:
       MB_DB_DBNAME: ${MB_POSTGRES_DB:-metabase}
       MB_DB_PORT: 5432
       MB_DB_USER: ${MB_POSTGRES_USER:-metabase}
-      MB_DB_PASS: ${MB_POSTGRES_PASSWORD:-metabase}
+      MB_DB_PASS: ${MB_POSTGRES_PASSWORD:-uHCRzitx5lyfb3Cs5ybM45gkYUV6Nh}
       MB_DB_HOST: ${MB_POSTGRES_HOST:-postgres}
     depends_on:
       postgres:
@@ -32,7 +32,7 @@ services:
       - "50001:5432"
     environment:
       POSTGRES_USER: ${MB_POSTGRES_USER:-metabase}
-      POSTGRES_PASSWORD: ${MB_POSTGRES_PASSWORD:-metabase}
+      POSTGRES_PASSWORD: ${MB_POSTGRES_PASSWORD:-uHCRzitx5lyfb3Cs5ybM45gkYUV6Nh}
       POSTGRES_DB: ${MB_POSTGRES_DB:-metabase}
       POSTGRES_PORT: 5432
       POSTGRES_HOST: ${MB_POSTGRES_HOST:-postgres}
