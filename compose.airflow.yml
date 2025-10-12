@@ -54,7 +54,7 @@ x-airflow-common:
     user: 
         "${AIRFLOW_UID:-50000}:0"
     env_file:
-        - .env
+        - stack.env
     depends_on:
         &airflow-common-depends-on
         redis:
