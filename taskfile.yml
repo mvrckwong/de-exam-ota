@@ -17,3 +17,12 @@ tasks:
     cmds:
       - '{{.SUDO}}docker compose -f {{.COMPOSE_AIRFLOW_FILE}} down'
       - '{{.SUDO}}docker compose -f {{.COMPOSE_AIRFLOW_FILE}} up -d --build --remove-orphans --force-recreate'
+
+  reload_airflow_reqs:
+    description: "Update or reload the requirements.txt from pyproject.toml with airflow constraints."
+    sources:
+      - pyproject.toml
+    generates:
+      - ./.devcontainer/requirements.txt
+    cmds:
+      - uv pip compile pyproject.toml -c https://raw.githubusercontent.com/apache/airflow/constraints-3.0.0/constraints-3.12.txt -o ./.devcontainer/requirements.txt
