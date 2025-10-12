@@ -3,7 +3,7 @@ version: 3
 vars:
   SUDO: '{{if eq OS "linux"}}sudo {{end}}'
   COMPOSE_MB_FILE: compose.metabase.yml
-  COMPOSE_AIRFLOW_FILE: compose.airflow.yml
+  COMPOSE_AIRFLOW_FILE: compose.airflow-prod.yml
 
 tasks:
   deploy_metabase:
