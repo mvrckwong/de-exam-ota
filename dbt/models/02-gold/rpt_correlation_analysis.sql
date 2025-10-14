@@ -1,7 +1,7 @@
 {{
     config(
         materialized='table',
-        tags=['gold', 'report', 'correlation', 'from_silver']
+        tags=['gold', 'report', 'correlation', 'from_fact']
     )
 }}
 
@@ -11,16 +11,16 @@
     Purpose: Answers the question - "Is there a correlation between two 
     specific columns? Explain your findings."
     
-    This model calculates correlations between:
-    1. Confirmed Cases vs Deaths (expected strong positive correlation)
-    2. Testing Rate vs Incident Rate (expected negative correlation)
-    3. Hospitalization Rate vs Mortality Rate (expected positive correlation)
-    4. Confirmed Cases vs Case Fatality Ratio (inverse relationship expected)
+    This model calculates correlations between key COVID-19 metrics.
+    Leverages pre-calculated metrics from fct_covid_daily for better performance.
+    
+    Built from: fct_covid_daily (fact table)
+    This ensures consistency with all other gold models and leverages pre-calculated metrics.
+    For exploration and custom analysis with complex transformations.
 */
 
 with us_metrics as (
     select
-        province_state,
         confirmed_cases,
         total_deaths,
         people_tested,
@@ -29,11 +29,14 @@ with us_metrics as (
         hospitalization_rate_pct,
         mortality_rate_pct,
         incident_rate_per_100k,
-        case_fatality_ratio_pct
-    from {{ ref('silver_covid_cases_us') }}
-    where confirmed_cases > 0
-        and total_deaths >= 0
-        and snapshot_date is not null
+        case_fatality_ratio_pct,
+        test_positivity_rate_pct,
+        daily_new_cases,
+        daily_new_deaths
+    from {{ ref('fct_covid_daily') }}
+    where data_source = 'US'
+        and confirmed_cases > 0
+        and report_date is not null
 ),
 
 -- Calculate correlation between confirmed cases and deaths
@@ -78,6 +81,21 @@ hosp_mortality_correlation as (
     from us_metrics
     where hospitalization_rate_pct is not null
         and mortality_rate_pct is not null
+),
+
+-- Correlation 4: Daily New Cases vs Test Positivity
+new_cases_positivity_correlation as (
+    select
+        'Daily New Cases vs Test Positivity Rate' as metric_pair,
+        corr(daily_new_cases, test_positivity_rate_pct) as correlation_coefficient,
+        count(*) as sample_size,
+        avg(daily_new_cases) as avg_cases_positivity,
+        avg(test_positivity_rate_pct) as avg_test_positivity_rate,
+        stddev(daily_new_cases) as stddev_cases_positivity,
+        stddev(test_positivity_rate_pct) as stddev_test_positivity_rate
+    from us_metrics
+    where test_positivity_rate_pct is not null
+        and daily_new_cases is not null
 ),
 
 -- Calculate correlation between confirmed cases and case fatality ratio
@@ -128,6 +146,18 @@ combined_correlations as (
         stddev_hospitalization_rate as metric_1_stddev,
         stddev_mortality_rate as metric_2_stddev
     from hosp_mortality_correlation
+    
+    union all
+    
+    select 
+        metric_pair,
+        correlation_coefficient,
+        sample_size,
+        avg_cases_positivity as metric_1_avg,
+        avg_test_positivity_rate as metric_2_avg,
+        stddev_cases_positivity as metric_1_stddev,
+        stddev_test_positivity_rate as metric_2_stddev
+    from new_cases_positivity_correlation
     
     union all
     

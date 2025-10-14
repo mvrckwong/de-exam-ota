@@ -98,6 +98,9 @@ models:
       Answers the analytical question: "What are the top 5 most common values 
       in a particular column, and what is their frequency?"
       
+      Built from: fct_covid_daily (fact table)
+      This ensures consistency with all other gold models and leverages pre-calculated metrics.
+      
       This report provides frequency analysis of countries by their confirmed case counts,
       including percentage of global cases and severity tiers.
       
@@ -182,10 +185,14 @@ models:
       Answers the question: "Is there a correlation between two specific columns? 
       Explain your findings."
       
+      Built from: fct_covid_daily (fact table)
+      This ensures consistency with all other gold models and leverages pre-calculated metrics.
+      
       Calculates Pearson correlation coefficients between pairs of metrics:
       - Confirmed Cases vs Deaths
       - Testing Rate vs Incident Rate
       - Hospitalization Rate vs Mortality Rate
+      - Daily New Cases vs Test Positivity Rate
       - Confirmed Cases vs Case Fatality Ratio
       
       Includes interpretation of correlation strength, direction, and statistical confidence.

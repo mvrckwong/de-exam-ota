@@ -1,7 +1,7 @@
 {{
     config(
         materialized='table',
-        tags=['gold', 'report', 'top_values', 'from_silver']
+        tags=['gold', 'report', 'top_values', 'from_fact']
     )
 }}
 
@@ -13,21 +13,37 @@
     
     This model identifies the countries with the highest confirmed COVID-19 cases
     and their frequency of occurrence across different regions/provinces.
+    
+    Built from: fct_covid_daily (fact table)
+    This ensures consistency with all other gold models and leverages pre-calculated metrics.
+    For exploration and custom analysis with complex transformations.
 */
 
-with country_metrics as (
+with latest_by_country as (
+    -- Get the most recent data for each country
     select
         country_region,
-        count(*) as record_count,
-        sum(confirmed_cases) as total_confirmed_cases,
-        sum(total_deaths) as total_deaths,
-        sum(total_recovered) as total_recovered,
-        avg(case_fatality_ratio_pct) as avg_case_fatality_ratio,
-        count(distinct province_state) as unique_provinces
-    from {{ ref('silver_covid_cases_global') }}
-    where country_region is not null
-        and country_region != 'Unknown'
+        max(report_date) as latest_report_date
+    from {{ ref('fct_covid_daily') }}
     group by country_region
+),
+
+country_metrics as (
+    select
+        f.country_region,
+        count(distinct f.report_date) as record_count,
+        sum(f.confirmed_cases) as total_confirmed_cases,
+        sum(f.total_deaths) as total_deaths,
+        sum(f.total_recovered) as total_recovered,
+        avg(f.case_fatality_ratio_pct) as avg_case_fatality_ratio,
+        count(distinct f.province_state) as unique_provinces
+    from {{ ref('fct_covid_daily') }} f
+    inner join latest_by_country l
+        on f.country_region = l.country_region
+        and f.report_date = l.latest_report_date
+    where f.country_region is not null
+        and f.country_region != 'Unknown'
+    group by f.country_region
 ),
 
 ranked_countries as (
