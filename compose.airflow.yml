@@ -9,6 +9,11 @@ x-airflow-common:
       &airflow-common-env
       AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
       
+      # CRITICAL: Same secret key everywhere - hardcoded
+      AIRFLOW__WEBSERVER__SECRET_KEY: 'aB3dF9kL2mN8pQ5rS7tV0wX4yZ6cE1gH3jK5nM7pR9sT2vW4xY6zA8bD0eF2gH4j'
+      AIRFLOW__API__SECRET_KEY: 'aB3dF9kL2mN8pQ5rS7tV0wX4yZ6cE1gH3jK5nM7pR9sT2vW4xY6zA8bD0eF2gH4j'
+      AIRFLOW__API_AUTH__JWT_SECRET: 'aB3dF9kL2mN8pQ5rS7tV0wX4yZ6cE1gH3jK5nM7pR9sT2vW4xY6zA8bD0eF2gH4j'
+
       # Core Settings
       AIRFLOW__CORE__EXECUTOR: CeleryExecutor
       AIRFLOW__CORE__FERNET_KEY: ''
@@ -17,9 +22,12 @@ x-airflow-common:
       AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://api-server:8080/execution/'
       AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
       
-      # API Settings
+      # API Settings - SINGLE WORKER IS THE KEY
       AIRFLOW__API__HOST: '0.0.0.0'
       AIRFLOW__API__PORT: '8080'
+      AIRFLOW__API__WORKERS: '1'
+      AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.session'
+      AIRFLOW__API__ENABLE_EXPERIMENTAL_API: 'false'
       
       # Database Settings
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
@@ -32,36 +40,44 @@ x-airflow-common:
       AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
 
       # Webserver Settings
-      AIRFLOW__WEBSERVER__SECRET_KEY: 'aB3dF9kL2mN8pQ5rS7tV0wX4yZ6cE1gH3jK5nM7pR9sT2vW4xY6zA8bD0eF2gH4j'
       AIRFLOW__WEBSERVER__BASE_URL: 'http://192.168.1.105:8080'
       AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'false'
+      AIRFLOW__WEBSERVER__RATELIMIT_ENABLED: 'false'
       
-      # CRITICAL: Use Redis for sessions (shared across workers)
+      # Session - Use Redis to share across workers
       AIRFLOW__WEBSERVER__SESSION_BACKEND: 'redis'
-      AIRFLOW__WEBSERVER__SESSION_REDIS_URL: 'redis://:@redis:6379/2'
+      AIRFLOW__WEBSERVER__SESSION_REDIS_HOST: 'redis'
+      AIRFLOW__WEBSERVER__SESSION_REDIS_PORT: '6379'
+      AIRFLOW__WEBSERVER__SESSION_REDIS_DB: '2'
+      AIRFLOW__WEBSERVER__SESSION_LIFETIME_DAYS: '30'
       
-      # Cookie Settings - Relaxed for troubleshooting
+      # Cookie Settings - Critical for network IP access
+      AIRFLOW__WEBSERVER__SESSION_COOKIE_SAMESITE: 'Lax'
+      AIRFLOW__WEBSERVER__SESSION_COOKIE_SECURE: 'false'
+      AIRFLOW__WEBSERVER__SESSION_COOKIE_HTTPONLY: 'true'
       AIRFLOW__WEBSERVER__COOKIE_SECURE: 'false'
       AIRFLOW__WEBSERVER__COOKIE_SAMESITE: 'Lax'
       
-      AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.default'
-      AIRFLOW__WEBSERVER__AUTHENTICATE: 'false'
-      
       # Proxy Settings
       AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: 'true'
+      AIRFLOW__WEBSERVER__PROXY_FIX_X_FOR: '1'
+      AIRFLOW__WEBSERVER__PROXY_FIX_X_PROTO: '1'
+      AIRFLOW__WEBSERVER__PROXY_FIX_X_HOST: '1'
+      AIRFLOW__WEBSERVER__PROXY_FIX_X_PORT: '1'
+      AIRFLOW__WEBSERVER__PROXY_FIX_X_PREFIX: '1'
       
       # FAB Settings
       AIRFLOW__FAB__UPDATE_FAB_PERMS: 'true'
+      AIRFLOW__FAB__AUTH_RATE_LIMITED: 'false'
       
-      HOST_IP: ${HOST_IP:-host.docker.internal}
+      HOST_IP: 'host.docker.internal'
 
     volumes:
-        - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
-        - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
-        - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
-        - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
-    user: 
-        "${AIRFLOW_UID:-50000}:0"
+        - ./dags:/opt/airflow/dags
+        - ./logs:/opt/airflow/logs
+        - ./config:/opt/airflow/config
+        - ./plugins:/opt/airflow/plugins
+    user: "50000:0"
     depends_on:
         &airflow-common-depends-on
         redis:
@@ -76,9 +92,9 @@ services:
     postgres:
         image: postgres:13
         environment:
-            POSTGRES_USER: ${POSTGRES_USER:-airflow}
-            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-airflow}
-            POSTGRES_DB: ${POSTGRES_DB:-airflow}
+            POSTGRES_USER: airflow
+            POSTGRES_PASSWORD: airflow
+            POSTGRES_DB: airflow
         volumes:
             - postgres-db-volume:/var/lib/postgresql/data
         healthcheck:
@@ -93,8 +109,8 @@ services:
 
     redis:
         image: redis:7.2-bookworm
-        ports:
-          - "6379:6379"
+        expose:
+          - 6379
         healthcheck:
           test: ["CMD", "redis-cli", "ping"]
           interval: 10s
@@ -107,8 +123,7 @@ services:
 
     api-server:
         <<: *airflow-common
-        # CRITICAL: Override command to use single worker for testing
-        command: ["api-server", "--workers", "1"]
+        command: ["api-server"]
         ports:
           - "8080:8080"
         healthcheck:
@@ -239,18 +254,14 @@ services:
             echo
             fi
             mkdir -p /opt/airflow/{logs,dags,plugins,config}
-            chown -R "${AIRFLOW_UID}:0" /opt/airflow/{logs,dags,plugins,config}
-            
-            # Remove any existing config file that might override env vars
-            rm -f /opt/airflow/config/airflow.cfg
-            
+            chown -R "50000:0" /opt/airflow/{logs,dags,plugins,config}
             exec /entrypoint airflow version
         environment:
             <<: *airflow-common-env
-            _AIRFLOW_DB_MIGRATE: ${_AIRFLOW_DB_MIGRATE:-true}
-            _AIRFLOW_WWW_USER_CREATE: ${_AIRFLOW_WWW_USER_CREATE:-true}
-            _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
-            _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+            _AIRFLOW_DB_MIGRATE: 'true'
+            _AIRFLOW_WWW_USER_CREATE: 'true'
+            _AIRFLOW_WWW_USER_USERNAME: 'airflow'
+            _AIRFLOW_WWW_USER_PASSWORD: 'airflow'
         user: "0:0"
         restart: "no"
 
