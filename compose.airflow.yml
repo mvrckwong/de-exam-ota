@@ -18,8 +18,10 @@ x-airflow-common:
       AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://api-server:8080/execution/'
       AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
       
-      # API Settings - CRITICAL FOR AIRFLOW 3.0
-      AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.session,airflow.api.auth.backend.basic_auth'
+      # API Settings (NEW in Airflow 3.0 - replaces webserver settings)
+      AIRFLOW__API__HOST: '0.0.0.0'
+      AIRFLOW__API__PORT: '8080'
+      AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.session'
       AIRFLOW__API__ENABLE_EXPERIMENTAL_API: 'false'
       
       # Database Settings
@@ -32,22 +34,24 @@ x-airflow-common:
       # Scheduler Settings
       AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
 
-      # Webserver Settings - COMPLETE CONFIG
+      # Webserver Settings
       AIRFLOW__WEBSERVER__SECRET_KEY: 'aB3dF9kL2mN8pQ5rS7tV0wX4yZ6cE1gH3jK5nM7pR9sT2vW4xY6zA8bD0eF2gH4j'
       AIRFLOW__WEBSERVER__BASE_URL: 'http://192.168.1.105:8080'
-      AIRFLOW__WEBSERVER__WEB_SERVER_HOST: '0.0.0.0'
-      AIRFLOW__WEBSERVER__WEB_SERVER_PORT: '8080'
       AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'false'
-      AIRFLOW__WEBSERVER__RATELIMIT_STORAGE_URI: "redis://:@redis:6379/1"
       
-      # Cookie/Session Settings - CRITICAL
+      # Rate Limiter - Fix the Redis connection
+      AIRFLOW__WEBSERVER__RATELIMIT_ENABLED: 'true'
+      AIRFLOW__WEBSERVER__RATELIMIT_STORAGE_URI: 'redis://@redis:6379/1'
+      
+      # Cookie/Session Settings - CRITICAL for remote access
       AIRFLOW__WEBSERVER__SESSION_COOKIE_SAMESITE: 'Lax'
       AIRFLOW__WEBSERVER__SESSION_COOKIE_SECURE: 'false'
       AIRFLOW__WEBSERVER__SESSION_COOKIE_HTTPONLY: 'true'
+      AIRFLOW__WEBSERVER__SESSION_COOKIE_NAME: 'airflow_session'
       AIRFLOW__WEBSERVER__COOKIE_SECURE: 'false'
       AIRFLOW__WEBSERVER__COOKIE_SAMESITE: 'Lax'
       
-      # Proxy Settings
+      # Proxy Settings - CRITICAL for TrueNAS/Portainer deployment
       AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: 'true'
       AIRFLOW__WEBSERVER__PROXY_FIX_X_FOR: '1'
       AIRFLOW__WEBSERVER__PROXY_FIX_X_PROTO: '1'
@@ -55,8 +59,12 @@ x-airflow-common:
       AIRFLOW__WEBSERVER__PROXY_FIX_X_PORT: '1'
       AIRFLOW__WEBSERVER__PROXY_FIX_X_PREFIX: '1'
       
+      # FAB (Flask AppBuilder) Settings - CRITICAL
+      AIRFLOW__FAB__UPDATE_FAB_PERMS: 'true'
+      AIRFLOW__FAB__AUTH_RATE_LIMITED: 'false'
+      
       HOST_IP: ${HOST_IP:-host.docker.internal}
-
+      
     volumes:
         - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
         - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
