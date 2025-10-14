@@ -22,7 +22,14 @@ Following dbt naming conventions, models are prefixed by their purpose:
 
 ## Architecture
 
-### 🏗️ Fact Table (Core Foundation)
+### 🏗️ **CONSISTENT ARCHITECTURE ACHIEVED**
+
+**All gold models now follow the same architectural pattern:**
+
+#### **Single Source of Truth**
+- **Fact Table**: `fct_covid_daily` - Central hub for all analytical queries
+- **All Models**: Source from `fct_covid_daily` for consistency and performance
+- **Pre-calculated Metrics**: Leverage existing calculations for better performance
 
 #### `fct_covid_daily`
 **The Single Source of Truth for COVID-19 Analytics**
@@ -57,12 +64,37 @@ Following dbt naming conventions, models are prefixed by their purpose:
 
 ## Model Categories
 
-### 📊 Report Models (rpt_*)
+### 🏗️ **CONSISTENT ARCHITECTURE ACHIEVED**
 
-Complex analytical reports built directly from silver layer. Use these when you need:
-- Custom transformations not available in the fact table
-- Exploration and ad-hoc analysis
-- Specific business logic from source data
+**All gold models now follow the same architectural pattern:**
+
+#### **Single Source of Truth**
+- **Fact Table**: `fct_covid_daily` - Central hub for all analytical queries
+- **All Models**: Source from `fct_covid_daily` for consistency and performance
+- **Pre-calculated Metrics**: Leverage existing calculations for better performance
+
+### 📊 Model Categories
+
+#### **1. Core Fact Table**
+- **`fct_covid_daily`** - Single source of truth combining US and global data
+  - **Purpose**: Central hub for all analytical queries
+  - **Grain**: One row per location per day
+  - **Features**: Pre-calculated metrics, surrogate keys, derived measures
+
+#### **2. Aggregation Models** (from fact table)
+- **`agg_daily_summary`** - Daily national-level aggregated metrics
+- **`agg_state_summary`** - State-level comprehensive summaries  
+- **`agg_country_summary`** - Country-level global analysis
+
+#### **3. Data Mart Models** (from fact table)
+- **`mart_top_countries`** - Top countries analysis for dashboards
+- **`mart_covid_trends`** - Time series trends for dashboards
+- **`mart_correlation_metrics`** - Correlation analysis for dashboards
+
+#### **4. Report Models** (from fact table)
+- **`rpt_top_countries_by_cases`** - Top countries analysis for exploration
+- **`rpt_covid_trends_over_time`** - Time series analysis for exploration
+- **`rpt_correlation_analysis`** - Statistical analysis for exploration
 
 #### 1. `rpt_top_countries_by_cases`
 **Question Answered:** *"What are the top 5 most common values in a particular column, and what is their frequency?"*
