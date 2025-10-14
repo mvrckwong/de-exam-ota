@@ -8,8 +8,7 @@ x-airflow-common:
     environment:
       &airflow-common-env
       AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
-      AIRFLOW__API_AUTH__JWT_SECRET: 'aB3dF9kL2mN8pQ5rS7tV0wX4yZ6cE1gH3jK5nM7pR9sT2vW4xY6zA8bD0eF2gH4j'
-
+      
       # Core Settings
       AIRFLOW__CORE__EXECUTOR: CeleryExecutor
       AIRFLOW__CORE__FERNET_KEY: ''
@@ -18,14 +17,10 @@ x-airflow-common:
       AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://api-server:8080/execution/'
       AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
       
-      # API Settings (Airflow 3.0)
+      # API Settings
       AIRFLOW__API__HOST: '0.0.0.0'
       AIRFLOW__API__PORT: '8080'
       AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.session'
-      AIRFLOW__API__ENABLE_EXPERIMENTAL_API: 'false'
-      AIRFLOW__API__ACCESS_CONTROL_ALLOW_ORIGINS: '*'
-      AIRFLOW__API__ACCESS_CONTROL_ALLOW_METHODS: '*'
-      AIRFLOW__API__ACCESS_CONTROL_ALLOW_HEADERS: '*'
       
       # Database Settings
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
@@ -41,36 +36,20 @@ x-airflow-common:
       AIRFLOW__WEBSERVER__SECRET_KEY: 'aB3dF9kL2mN8pQ5rS7tV0wX4yZ6cE1gH3jK5nM7pR9sT2vW4xY6zA8bD0eF2gH4j'
       AIRFLOW__WEBSERVER__BASE_URL: 'http://192.168.1.105:8080'
       AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'false'
-      AIRFLOW__WEBSERVER__RATELIMIT_ENABLED: 'false'
       
-      # Cookie/Session Settings - CRITICAL
-      AIRFLOW__WEBSERVER__SESSION_COOKIE_SAMESITE: 'None'
-      AIRFLOW__WEBSERVER__SESSION_COOKIE_SECURE: 'false'
-      AIRFLOW__WEBSERVER__SESSION_COOKIE_HTTPONLY: 'false'
-      AIRFLOW__WEBSERVER__SESSION_COOKIE_NAME: 'session'
+      # CRITICAL: Use Redis for sessions (shared across workers)
+      AIRFLOW__WEBSERVER__SESSION_BACKEND: 'redis'
+      AIRFLOW__WEBSERVER__SESSION_REDIS_URL: 'redis://:@redis:6379/2'
+      
+      # Cookie Settings - Relaxed for troubleshooting
       AIRFLOW__WEBSERVER__COOKIE_SECURE: 'false'
-      AIRFLOW__WEBSERVER__COOKIE_SAMESITE: 'None'
+      AIRFLOW__WEBSERVER__COOKIE_SAMESITE: 'Lax'
       
       # Proxy Settings
       AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: 'true'
-      AIRFLOW__WEBSERVER__PROXY_FIX_X_FOR: '1'
-      AIRFLOW__WEBSERVER__PROXY_FIX_X_PROTO: '1'
-      AIRFLOW__WEBSERVER__PROXY_FIX_X_HOST: '1'
-      AIRFLOW__WEBSERVER__PROXY_FIX_X_PORT: '1'
-      AIRFLOW__WEBSERVER__PROXY_FIX_X_PREFIX: '1'
       
-      # FAB (Flask AppBuilder) Settings - CRITICAL FOR SESSION
+      # FAB Settings
       AIRFLOW__FAB__UPDATE_FAB_PERMS: 'true'
-      AIRFLOW__FAB__AUTH_RATE_LIMITED: 'false'
-      
-      # Flask Session Configuration - THE KEY MISSING PIECE
-      AIRFLOW__WEBSERVER__SESSION_BACKEND: 'database'
-      AIRFLOW__WEBSERVER__SESSION_LIFETIME_DAYS: '30'
-      
-      # Additional Flask settings via environment variables
-      FLASK_APP: 'airflow.www.app:create_app'
-      SESSION_COOKIE_DOMAIN: ''
-      SESSION_COOKIE_PATH: '/'
       
       HOST_IP: ${HOST_IP:-host.docker.internal}
 
@@ -112,8 +91,8 @@ services:
 
     redis:
         image: redis:7.2-bookworm
-        expose:
-          - 6379
+        ports:
+          - "6379:6379"
         healthcheck:
           test: ["CMD", "redis-cli", "ping"]
           interval: 10s
@@ -126,7 +105,8 @@ services:
 
     api-server:
         <<: *airflow-common
-        command: ["api-server"]
+        # CRITICAL: Override command to use single worker for testing
+        command: ["api-server", "--workers", "1"]
         ports:
           - "8080:8080"
         healthcheck:
@@ -258,6 +238,10 @@ services:
             fi
             mkdir -p /opt/airflow/{logs,dags,plugins,config}
             chown -R "${AIRFLOW_UID}:0" /opt/airflow/{logs,dags,plugins,config}
+            
+            # Remove any existing config file that might override env vars
+            rm -f /opt/airflow/config/airflow.cfg
+            
             exec /entrypoint airflow version
         environment:
             <<: *airflow-common-env
