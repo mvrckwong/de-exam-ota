@@ -1,0 +1,21 @@
+name: warehouse-postgres
+
+postgres:
+  image: postgres:15
+  container_name: warehouse-postgres-db
+  ports:
+    - "50002:5432"
+  environment:
+    POSTGRES_USER: ${WAREHOUSE_POSTGRES_USER:-warehouse}
+    POSTGRES_PASSWORD: ${WAREHOUSE_POSTGRES_PASSWORD:-warehouse}
+    POSTGRES_DB: ${WAREHOUSE_POSTGRES_DB:-warehouse}
+    POSTGRES_PORT: 5432
+    POSTGRES_HOST: ${WAREHOUSE_POSTGRES_HOST:-postgres}
+  volumes:
+    - warehouse_postgres_data:/var/lib/postgresql/data
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U ${WAREHOUSE_POSTGRES_USER:-warehouse}"]
+    interval: 10s
+    retries: 10
+    start_period: 5s
+  restart: always
