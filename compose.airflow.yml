@@ -18,11 +18,14 @@ x-airflow-common:
       AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://api-server:8080/execution/'
       AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
       
-      # API Settings (NEW in Airflow 3.0 - replaces webserver settings)
+      # API Settings (Airflow 3.0)
       AIRFLOW__API__HOST: '0.0.0.0'
       AIRFLOW__API__PORT: '8080'
       AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.session'
       AIRFLOW__API__ENABLE_EXPERIMENTAL_API: 'false'
+      AIRFLOW__API__ACCESS_CONTROL_ALLOW_ORIGINS: '*'
+      AIRFLOW__API__ACCESS_CONTROL_ALLOW_METHODS: '*'
+      AIRFLOW__API__ACCESS_CONTROL_ALLOW_HEADERS: '*'
       
       # Database Settings
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
@@ -38,20 +41,17 @@ x-airflow-common:
       AIRFLOW__WEBSERVER__SECRET_KEY: 'aB3dF9kL2mN8pQ5rS7tV0wX4yZ6cE1gH3jK5nM7pR9sT2vW4xY6zA8bD0eF2gH4j'
       AIRFLOW__WEBSERVER__BASE_URL: 'http://192.168.1.105:8080'
       AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'false'
+      AIRFLOW__WEBSERVER__RATELIMIT_ENABLED: 'false'
       
-      # Rate Limiter - Fix the Redis connection
-      AIRFLOW__WEBSERVER__RATELIMIT_ENABLED: 'true'
-      AIRFLOW__WEBSERVER__RATELIMIT_STORAGE_URI: 'redis://@redis:6379/1'
-      
-      # Cookie/Session Settings - CRITICAL for remote access
-      AIRFLOW__WEBSERVER__SESSION_COOKIE_SAMESITE: 'Lax'
+      # Cookie/Session Settings - CRITICAL
+      AIRFLOW__WEBSERVER__SESSION_COOKIE_SAMESITE: 'None'
       AIRFLOW__WEBSERVER__SESSION_COOKIE_SECURE: 'false'
-      AIRFLOW__WEBSERVER__SESSION_COOKIE_HTTPONLY: 'true'
-      AIRFLOW__WEBSERVER__SESSION_COOKIE_NAME: 'airflow_session'
+      AIRFLOW__WEBSERVER__SESSION_COOKIE_HTTPONLY: 'false'
+      AIRFLOW__WEBSERVER__SESSION_COOKIE_NAME: 'session'
       AIRFLOW__WEBSERVER__COOKIE_SECURE: 'false'
-      AIRFLOW__WEBSERVER__COOKIE_SAMESITE: 'Lax'
+      AIRFLOW__WEBSERVER__COOKIE_SAMESITE: 'None'
       
-      # Proxy Settings - CRITICAL for TrueNAS/Portainer deployment
+      # Proxy Settings
       AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: 'true'
       AIRFLOW__WEBSERVER__PROXY_FIX_X_FOR: '1'
       AIRFLOW__WEBSERVER__PROXY_FIX_X_PROTO: '1'
@@ -59,12 +59,21 @@ x-airflow-common:
       AIRFLOW__WEBSERVER__PROXY_FIX_X_PORT: '1'
       AIRFLOW__WEBSERVER__PROXY_FIX_X_PREFIX: '1'
       
-      # FAB (Flask AppBuilder) Settings - CRITICAL
+      # FAB (Flask AppBuilder) Settings - CRITICAL FOR SESSION
       AIRFLOW__FAB__UPDATE_FAB_PERMS: 'true'
       AIRFLOW__FAB__AUTH_RATE_LIMITED: 'false'
       
-      HOST_IP: ${HOST_IP:-host.docker.internal}
+      # Flask Session Configuration - THE KEY MISSING PIECE
+      AIRFLOW__WEBSERVER__SESSION_BACKEND: 'database'
+      AIRFLOW__WEBSERVER__SESSION_LIFETIME_DAYS: '30'
       
+      # Additional Flask settings via environment variables
+      FLASK_APP: 'airflow.www.app:create_app'
+      SESSION_COOKIE_DOMAIN: ''
+      SESSION_COOKIE_PATH: '/'
+      
+      HOST_IP: ${HOST_IP:-host.docker.internal}
+
     volumes:
         - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
         - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
@@ -175,8 +184,6 @@ services:
             start_period: 30s
         environment:
             <<: *airflow-common-env
-            # Required to handle warm shutdown of the celery workers properly
-            # See https://airflow.apache.org/docs/docker-stack/entrypoint.html#signal-propagation
             DUMB_INIT_SETSID: "0"
         restart: always
         depends_on:
@@ -292,12 +299,10 @@ services:
             init:
                 condition: service_completed_successfully
 
-# Define internal and external networks
 networks:
     airflow-network:
         driver: bridge
         name: airflow-internal-network
-    # For Backups and Restores
     shared-db-network:
         driver: bridge
         name: shared-db-network
@@ -305,6 +310,5 @@ networks:
         driver: bridge
         name: shared-airflow-network
 
-# Define named volumes
 volumes:
     postgres-db-volume:
