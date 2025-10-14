@@ -6,56 +6,57 @@ x-airflow-common:
         context: ./.devcontainer
         dockerfile: Dockerfile.airflow
     environment:
-        &airflow-common-env
-        AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
-        AIRFLOW__API_AUTH__JWT_SECRET: 'aB3dF9kL2mN8pQ5rS7tV0wX4yZ6cE1gH3jK5nM7pR9sT2vW4xY6zA8bD0eF2gH4j'
+      &airflow-common-env
+      AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
+      AIRFLOW__API_AUTH__JWT_SECRET: 'aB3dF9kL2mN8pQ5rS7tV0wX4yZ6cE1gH3jK5nM7pR9sT2vW4xY6zA8bD0eF2gH4j'
 
-        # Core Settings
-        AIRFLOW__CORE__EXECUTOR: CeleryExecutor
-        AIRFLOW__CORE__FERNET_KEY: ''
-        AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
-        AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
-        AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://api-server:8080/execution/'
-        AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
-        
-        # Database Settings (Using variables from .env)
-        AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      # Core Settings
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://api-server:8080/execution/'
+      AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+      
+      # API Settings - CRITICAL FOR AIRFLOW 3.0
+      AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.session,airflow.api.auth.backend.basic_auth'
+      AIRFLOW__API__ENABLE_EXPERIMENTAL_API: 'false'
+      
+      # Database Settings
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
 
-        # Celery Settings (Using variables from .env)
-        AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
-        AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
-        
-        # Scheduler Settings
-        AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+      # Celery Settings
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
+      AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
+      
+      # Scheduler Settings
+      AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
 
-        # Webserver Settings (Using variables from .env)
-        AIRFLOW__WEBSERVER__SECRET_KEY: 'aB3dF9kL2mN8pQ5rS7tV0wX4yZ6cE1gH3jK5nM7pR9sT2vW4xY6zA8bD0eF2gH4j'
-        AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'false'
-        AIRFLOW__WEBSERVER__RATELIMIT_STORAGE_URI: "redis://:@redis:6379/1"
-        AIRFLOW__WEBSERVER__WEB_SERVER_HOST: 0.0.0.0
-        AIRFLOW__WEBSERVER__SESSION_COOKIE_SAMESITE: 'Lax'
-        AIRFLOW__WEBSERVER__SESSION_COOKIE_SECURE: 'false'
-        AIRFLOW__WEBSERVER__COOKIE_SECURE: 'false'
-        AIRFLOW__WEBSERVER__COOKIE_SAMESITE: 'Lax'
+      # Webserver Settings - COMPLETE CONFIG
+      AIRFLOW__WEBSERVER__SECRET_KEY: 'aB3dF9kL2mN8pQ5rS7tV0wX4yZ6cE1gH3jK5nM7pR9sT2vW4xY6zA8bD0eF2gH4j'
+      AIRFLOW__WEBSERVER__BASE_URL: 'http://192.168.1.105:8080'
+      AIRFLOW__WEBSERVER__WEB_SERVER_HOST: '0.0.0.0'
+      AIRFLOW__WEBSERVER__WEB_SERVER_PORT: '8080'
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'false'
+      AIRFLOW__WEBSERVER__RATELIMIT_STORAGE_URI: "redis://:@redis:6379/1"
+      
+      # Cookie/Session Settings - CRITICAL
+      AIRFLOW__WEBSERVER__SESSION_COOKIE_SAMESITE: 'Lax'
+      AIRFLOW__WEBSERVER__SESSION_COOKIE_SECURE: 'false'
+      AIRFLOW__WEBSERVER__SESSION_COOKIE_HTTPONLY: 'true'
+      AIRFLOW__WEBSERVER__COOKIE_SECURE: 'false'
+      AIRFLOW__WEBSERVER__COOKIE_SAMESITE: 'Lax'
+      
+      # Proxy Settings
+      AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: 'true'
+      AIRFLOW__WEBSERVER__PROXY_FIX_X_FOR: '1'
+      AIRFLOW__WEBSERVER__PROXY_FIX_X_PROTO: '1'
+      AIRFLOW__WEBSERVER__PROXY_FIX_X_HOST: '1'
+      AIRFLOW__WEBSERVER__PROXY_FIX_X_PORT: '1'
+      AIRFLOW__WEBSERVER__PROXY_FIX_X_PREFIX: '1'
+      
+      HOST_IP: ${HOST_IP:-host.docker.internal}
 
-        AIRFLOW__WEBSERVER__BASE_URL: 'http://192.168.1.105:8080'
-        AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: 'true'
-        
-        ALLOWED_HOSTS: '*'
-        SESSION_COOKIE_DOMAIN: ''
-
-        # Optional: Statsd settings for monitoring
-        # AIRFLOW__METRICS__STATSD_ON: 'true'
-        # AIRFLOW__METRICS__STATSD_HOST: 'statsd-exporter'
-        # AIRFLOW__METRICS__STATSD_PORT: '8125'
-        # AIRFLOW__METRICS__STATSD_PREFIX: 'airflow'
-
-        # Optional: Add other production configurations like logging, remote task handlers, etc.
-        # AIRFLOW__LOGGING__REMOTE_LOGGING: 'true'
-        # AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER: 's3://my-airflow-logs-bucket/logs'
-        # AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID: 'aws_default'
-        
-        HOST_IP: ${HOST_IP:-host.docker.internal}
     volumes:
         - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
         - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
@@ -118,6 +119,7 @@ services:
             retries: 10
             start_period: 5s
         restart: always
+        network_mode: host
         depends_on:
             <<: *airflow-common-depends-on
             init:
