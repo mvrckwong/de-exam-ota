@@ -1,5 +1,6 @@
 # Custom
 /.task
+/logs
 /config/airflow.cfg
 dbt_packages/
 package-lock.yml

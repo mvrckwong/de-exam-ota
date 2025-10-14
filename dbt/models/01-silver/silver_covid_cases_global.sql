@@ -4,10 +4,10 @@
     )
 }}
 
--- Dynamically union all bronze tables (seeds) without listing them individually
+-- Dynamically union all bronze tables that start with "global_"
 {% set relations = dbt_utils.get_relations_by_pattern(
     schema_pattern='bronze',
-    table_pattern='%'
+    table_pattern='global_%'
 ) %}
 
 {{ dbt_utils.union_relations(
