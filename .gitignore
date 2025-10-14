@@ -4,6 +4,7 @@
 dbt_packages/
 package-lock.yml
 *.csv
+uv.lock
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
