@@ -37,9 +37,3 @@ models:
 seeds:
   exam_ota:
     +schema: bronze
-    global:
-      +alias: "global_{{ this.name }}"
-    us:
-      +alias: "us_{{ this.name }}"
-    general:
-      +alias: "general_{{ this.name }}"
