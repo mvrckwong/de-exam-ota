@@ -1,6 +1,8 @@
 # Custom
 /.task
 /config/airflow.cfg
+dbt_packages/
+package-lock.yml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
