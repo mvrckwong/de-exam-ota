@@ -20,7 +20,6 @@ x-airflow-common:
       # API Settings
       AIRFLOW__API__HOST: '0.0.0.0'
       AIRFLOW__API__PORT: '8080'
-      AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.session'
       
       # Database Settings
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
@@ -44,6 +43,9 @@ x-airflow-common:
       # Cookie Settings - Relaxed for troubleshooting
       AIRFLOW__WEBSERVER__COOKIE_SECURE: 'false'
       AIRFLOW__WEBSERVER__COOKIE_SAMESITE: 'Lax'
+      
+      AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.default'
+      AIRFLOW__WEBSERVER__AUTHENTICATE: 'false'
       
       # Proxy Settings
       AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: 'true'
