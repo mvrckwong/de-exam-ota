@@ -33,9 +33,11 @@ models:
     01-silver:
       +materialized: table
       +schema: silver
+      +tags: [silver]
     02-gold:
       +materialized: table
       +schema: gold
+      +tags: [gold]
 
 seeds:
   exam_ota:

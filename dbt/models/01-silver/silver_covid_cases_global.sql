@@ -85,7 +85,7 @@ SELECT
     
     -- Lineage and Metadata
     CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS _staged_at,
-    REPLACE(REPLACE(_source, '""', '"'), '"warehouse"', 'warehouse') AS _source_table
+    REPLACE(REPLACE(REPLACE(_source, '"warehouse".', ''), '""', '"'), '"', '') AS _source_table
     
 FROM 
     transformed
