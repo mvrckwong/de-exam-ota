@@ -3,6 +3,7 @@
 /config/airflow.cfg
 dbt_packages/
 package-lock.yml
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
