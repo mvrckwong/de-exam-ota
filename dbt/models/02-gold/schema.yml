@@ -1,0 +1,322 @@
+version: 2
+
+models:
+  - name: fct_covid_daily
+    description: >
+      Core fact table combining US and global COVID-19 data at daily grain.
+      This is the single source of truth for all analytical queries and supports:
+      
+      1. Top values analysis - Aggregatable by country/state/location
+      2. Time series analysis - Daily grain with date dimensions
+      3. Correlation analysis - Contains all metrics for statistical analysis
+      
+      Grain: One row per location per day
+      - US data includes state-level daily snapshots
+      - Global data includes country/province-level snapshots
+      
+      This fact table follows dimensional modeling best practices with:
+      - Surrogate key for unique identification
+      - Pre-calculated day-over-day changes
+      - Rolling averages for trend analysis
+      - Derived metrics (CFR, recovery rate, test positivity)
+      - Severity classifications and trend indicators
+    columns:
+      - name: fact_key
+        description: Surrogate key uniquely identifying each fact record
+        tests:
+          - not_null
+          - unique
+      
+      - name: data_source
+        description: Source of data (US or Global)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['US', 'Global']
+      
+      - name: country_region
+        description: Country name
+        tests:
+          - not_null
+      
+      - name: province_state
+        description: State or province name (nullable for country-level data)
+      
+      - name: location_name
+        description: Full location identifier (province, country or just country)
+        tests:
+          - not_null
+      
+      - name: report_date
+        description: Date of the report/snapshot
+        tests:
+          - not_null
+      
+      - name: confirmed_cases
+        description: Cumulative confirmed cases (additive fact)
+        tests:
+          - not_null
+      
+      - name: total_deaths
+        description: Cumulative deaths (additive fact)
+      
+      - name: daily_new_cases
+        description: New cases reported on this day vs previous day
+      
+      - name: daily_new_deaths
+        description: New deaths reported on this day vs previous day
+      
+      - name: confirmed_cases_7day_avg
+        description: 7-day rolling average of confirmed cases (semi-additive)
+      
+      - name: case_fatality_ratio_pct
+        description: Case fatality ratio percentage (non-additive fact)
+      
+      - name: test_positivity_rate_pct
+        description: Calculated test positivity rate (cases/tests * 100)
+      
+      - name: case_trend
+        description: Trend direction indicator
+        tests:
+          - accepted_values:
+              values: ['Increasing', 'Decreasing', 'Stable', 'Unknown']
+      
+      - name: severity_category
+        description: Severity classification based on case counts
+        tests:
+          - accepted_values:
+              values: ['Critical', 'Very High', 'High', 'Moderate', 'Low', 'Very Low']
+      
+      - name: _fact_created_at
+        description: Timestamp when fact record was created
+        tests:
+          - not_null
+
+  - name: gold_top_countries_by_cases
+    description: >
+      Top 5 countries with highest confirmed COVID-19 cases. Answers the analytical question:
+      "What are the top 5 most common values in a particular column, and what is their frequency?"
+      
+      This model provides frequency analysis of countries by their confirmed case counts,
+      including percentage of global cases and severity tiers.
+    columns:
+      - name: rank_by_cases
+        description: Ranking position (1-5) based on total confirmed cases
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4, 5]
+      
+      - name: country_region
+        description: Country name
+        tests:
+          - not_null
+          - unique
+      
+      - name: occurrence_frequency
+        description: Number of records/regions reporting for this country
+        tests:
+          - not_null
+      
+      - name: total_confirmed_cases
+        description: Total confirmed COVID-19 cases across all regions in the country
+        tests:
+          - not_null
+      
+      - name: total_deaths
+        description: Total deaths across all regions in the country
+      
+      - name: pct_of_global_cases
+        description: Percentage of global cases attributed to this country
+      
+      - name: severity_tier
+        description: Classification of impact severity (Highest, Very High, High)
+
+  - name: gold_covid_trends_over_time
+    description: >
+      Time series analysis of COVID-19 metrics tracking changes over time. Answers the question:
+      "How does a particular metric change over time within the dataset?"
+      
+      Includes daily metrics, day-over-day changes, 7-day moving averages, and trend indicators
+      for confirmed cases, deaths, testing, and hospitalization rates at the state level.
+    columns:
+      - name: snapshot_date
+        description: Date of the snapshot
+        tests:
+          - not_null
+      
+      - name: province_state
+        description: US state or province
+        tests:
+          - not_null
+      
+      - name: daily_confirmed_cases
+        description: Total confirmed cases on this date
+      
+      - name: new_cases_vs_prev_day
+        description: New cases compared to previous day (daily increase)
+      
+      - name: pct_change_cases
+        description: Percentage change in cases from previous day
+      
+      - name: cases_7day_moving_avg
+        description: 7-day moving average of confirmed cases for trend smoothing
+      
+      - name: deaths_7day_moving_avg
+        description: 7-day moving average of deaths for trend smoothing
+      
+      - name: trend_direction
+        description: Indicator of trend (Increasing, Decreasing, Stable)
+        tests:
+          - accepted_values:
+              values: ['Increasing', 'Decreasing', 'Stable', 'Unknown']
+
+  - name: gold_correlation_analysis
+    description: >
+      Statistical correlation analysis between key COVID-19 metrics. Answers the question:
+      "Is there a correlation between two specific columns? Explain your findings."
+      
+      Calculates Pearson correlation coefficients between pairs of metrics:
+      - Confirmed Cases vs Deaths
+      - Testing Rate vs Incident Rate
+      - Hospitalization Rate vs Mortality Rate
+      - Confirmed Cases vs Case Fatality Ratio
+      
+      Includes interpretation of correlation strength, direction, and statistical confidence.
+    columns:
+      - name: metric_pair
+        description: The two metrics being correlated
+        tests:
+          - not_null
+          - unique
+      
+      - name: correlation_coefficient
+        description: Pearson correlation coefficient (-1 to 1)
+        tests:
+          - not_null
+      
+      - name: sample_size
+        description: Number of observations used in correlation calculation
+        tests:
+          - not_null
+      
+      - name: correlation_strength
+        description: Interpretation of correlation magnitude (Very Strong, Strong, Moderate, Weak, Very Weak)
+        tests:
+          - accepted_values:
+              values: ['Very Strong', 'Strong', 'Moderate', 'Weak', 'Very Weak or None']
+      
+      - name: correlation_direction
+        description: Direction of correlation (Positive, Negative, None)
+        tests:
+          - accepted_values:
+              values: ['Positive', 'Negative', 'None']
+      
+      - name: statistical_confidence
+        description: Confidence level based on sample size
+        tests:
+          - accepted_values:
+              values: ['High confidence', 'Medium confidence', 'Low confidence']
+      
+      - name: interpretation
+        description: Detailed interpretation of the correlation findings
+
+  - name: agg_daily_summary
+    description: >
+      Daily aggregated summary statistics across all US states. Provides high-level
+      national trends for executive reporting and dashboard visualization.
+    columns:
+      - name: snapshot_date
+        description: Date of the daily snapshot
+        tests:
+          - not_null
+          - unique
+      
+      - name: total_confirmed_cases
+        description: Cumulative confirmed cases across all states
+      
+      - name: new_cases_today
+        description: New cases reported today vs yesterday
+      
+      - name: cases_7day_rolling_avg
+        description: 7-day rolling average of total cases
+      
+      - name: overall_case_fatality_ratio_pct
+        description: National case fatality ratio percentage
+      
+      - name: test_positivity_rate_pct
+        description: Percentage of tests that are positive
+      
+      - name: states_reporting
+        description: Number of states reporting data on this date
+      
+      - name: case_trend
+        description: Overall trend direction (Rising, Falling, Stable)
+
+  - name: agg_state_summary
+    description: >
+      State-level aggregated summary statistics for comparative analysis.
+      Includes rankings, percentiles, and impact classifications.
+    columns:
+      - name: province_state
+        description: US state or province
+        tests:
+          - not_null
+          - unique
+      
+      - name: total_confirmed_cases
+        description: Total confirmed cases in the state
+      
+      - name: national_rank_cases
+        description: State's rank nationally by confirmed cases
+      
+      - name: national_rank_deaths
+        description: State's rank nationally by total deaths
+      
+      - name: cases_percentile
+        description: Percentile rank for cases (0-1 scale)
+      
+      - name: impact_category
+        description: Classification of state's impact level
+        tests:
+          - accepted_values:
+              values: ['Top 5 - Critical', 'Top 10 - Severe', 'Top 20 - High', 'Moderate', 'Lower Impact']
+
+  - name: agg_country_summary
+    description: >
+      Country-level aggregated summary statistics from global data.
+      Enables international comparative analysis with global rankings.
+    columns:
+      - name: country_region
+        description: Country name
+        tests:
+          - not_null
+          - unique
+      
+      - name: total_confirmed_cases
+        description: Total confirmed cases across the country
+      
+      - name: global_rank_cases
+        description: Country's global rank by confirmed cases
+      
+      - name: pct_of_global_cases
+        description: Country's share of total global cases
+      
+      - name: overall_case_fatality_ratio_pct
+        description: Country's overall case fatality ratio
+      
+      - name: recovery_rate_pct
+        description: Percentage of confirmed cases that recovered
+      
+      - name: global_impact_tier
+        description: Global impact classification
+        tests:
+          - accepted_values:
+              values: ['Top 10 Globally', 'Top 25 Globally', 'Top 50 Globally', 'Other']
+      
+      - name: severity_classification
+        description: Severity based on case fatality ratio
+        tests:
+          - accepted_values:
+              values: ['Very High Severity', 'High Severity', 'Moderate Severity', 'Low Severity', 'Very Low Severity']
+
