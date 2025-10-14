@@ -33,6 +33,11 @@ x-airflow-common:
         AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'false'
         AIRFLOW__WEBSERVER__RATELIMIT_STORAGE_URI: "redis://:@redis:6379/1"
         AIRFLOW__WEBSERVER__WEB_SERVER_HOST: 0.0.0.0
+        AIRFLOW__WEBSERVER__SESSION_COOKIE_SAMESITE: None
+        AIRFLOW__WEBSERVER__SESSION_COOKIE_SECURE: False
+
+        ALLOWED_HOSTS: '*'
+        SESSION_COOKIE_DOMAIN: ''
 
         # Optional: Statsd settings for monitoring
         # AIRFLOW__METRICS__STATSD_ON: 'true'
