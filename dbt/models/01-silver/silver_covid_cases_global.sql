@@ -10,7 +10,21 @@
     table_pattern='global_%'
 ) %}
 
-{{ dbt_utils.union_relations(
-    relations=relations,
-    source_column_name='_source_table'
-) }}
+with unioned_data as (
+    {{ dbt_utils.union_relations(
+        relations=relations,
+        source_column_name='_source'
+    ) }}
+),
+
+final as (
+    select
+        {% set columns = adapter.get_columns_in_relation(relations[0]) %}
+        {% for column in columns %}
+        {{ column.name }} as {{ column.name | lower }}{{ "," if not loop.last }}
+        {% endfor %},
+        _source
+    from unioned_data
+)
+
+select * from final
