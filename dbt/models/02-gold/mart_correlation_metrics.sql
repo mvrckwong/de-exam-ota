@@ -1,15 +1,17 @@
 {{
     config(
         materialized='table',
-        tags=['gold', 'analytics', 'correlation', 'fact_based']
+        tags=['gold', 'mart', 'correlation', 'from_fact']
     )
 }}
 
 /*
-    Gold Model: Correlation Analysis (Fact-Based Version)
+    Data Mart: Correlation Analysis
     
-    Purpose: Demonstrates how to use fct_covid_daily for correlation analysis.
-    Simplified version that leverages the centralized fact table.
+    Purpose: Optimized data mart for correlation analysis.
+    Uses centralized metrics from fct_covid_daily ensuring consistency.
+    This is the production-ready version - use this over rpt_correlation_analysis
+    for dashboards and regular reporting.
     
     Answers: "Is there a correlation between two specific columns? 
     Explain your findings."

@@ -1,12 +1,12 @@
 {{
     config(
         materialized='table',
-        tags=['gold', 'analytics', 'correlation']
+        tags=['gold', 'report', 'correlation', 'from_silver']
     )
 }}
 
 /*
-    Gold Model: Correlation Analysis Between Key Metrics
+    Report Model: Correlation Analysis Between Key Metrics
     
     Purpose: Answers the question - "Is there a correlation between two 
     specific columns? Explain your findings."

@@ -1,15 +1,17 @@
 {{
     config(
         materialized='table',
-        tags=['gold', 'analytics', 'time_series', 'fact_based']
+        tags=['gold', 'mart', 'time_series', 'from_fact']
     )
 }}
 
 /*
-    Gold Model: COVID-19 Trends Over Time (Fact-Based Version)
+    Data Mart: COVID-19 Trends Over Time
     
-    Purpose: Demonstrates how to use fct_covid_daily for time series analysis.
-    This is a simplified version that leverages pre-calculated metrics in the fact table.
+    Purpose: Optimized data mart for COVID trends analysis.
+    Leverages pre-calculated metrics from fct_covid_daily (rolling averages, day-over-day changes).
+    This is the production-ready version - use this over rpt_covid_trends_over_time
+    for dashboards and regular reporting.
     
     Answers: "How does a particular metric change over time within the dataset?"
 */

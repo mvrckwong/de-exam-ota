@@ -1,7 +1,7 @@
 {{
     config(
         materialized='table',
-        tags=['gold', 'aggregation', 'daily']
+        tags=['gold', 'aggregation', 'daily', 'from_fact']
     )
 }}
 
@@ -10,11 +10,14 @@
     
     Purpose: Provides high-level daily aggregated metrics across all US states
     for trend analysis and executive reporting.
+    
+    Built from: fct_covid_daily (fact table)
+    This ensures consistency with all other gold models and leverages pre-calculated metrics.
 */
 
 with daily_us_totals as (
     select
-        snapshot_date,
+        report_date as snapshot_date,
         sum(confirmed_cases) as total_confirmed_cases,
         sum(total_deaths) as total_deaths,
         sum(total_recovered) as total_recovered,
@@ -27,9 +30,10 @@ with daily_us_totals as (
         avg(hospitalization_rate_pct) as avg_hospitalization_rate_pct,
         avg(mortality_rate_pct) as avg_mortality_rate_pct,
         count(distinct province_state) as states_reporting
-    from {{ ref('silver_covid_cases_us') }}
-    where snapshot_date is not null
-    group by snapshot_date
+    from {{ ref('fct_covid_daily') }}
+    where data_source = 'US'
+        and report_date is not null
+    group by report_date
 ),
 
 with_derived_metrics as (

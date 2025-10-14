@@ -1,16 +1,17 @@
 {{
     config(
         materialized='table',
-        tags=['gold', 'analytics', 'top_values', 'fact_based']
+        tags=['gold', 'mart', 'top_values', 'from_fact']
     )
 }}
 
 /*
-    Gold Model: Top 5 Countries by Cases (Fact-Based Version)
+    Data Mart: Top 5 Countries by Cases
     
-    Purpose: Demonstrates how to use fct_covid_daily for top values analysis.
-    This is a simplified version of gold_top_countries_by_cases that queries
-    from the centralized fact table.
+    Purpose: Optimized data mart for top countries analysis.
+    Queries from fct_covid_daily for better performance and consistency.
+    This is the production-ready version - use this over rpt_top_countries_by_cases
+    for dashboards and regular reporting.
     
     Answers: "What are the top 5 most common values in a particular column, 
     and what is their frequency?"

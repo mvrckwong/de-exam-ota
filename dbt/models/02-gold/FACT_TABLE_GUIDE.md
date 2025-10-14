@@ -208,57 +208,66 @@ WHERE data_source = 'US';
 
 ## Model Options: Which Should You Use?
 
-### Option 1: Direct Silver Models
+### Option 1: Report Models (rpt_*)
 **Files:** 
-- `gold_top_countries_by_cases.sql`
-- `gold_covid_trends_over_time.sql`
-- `gold_correlation_analysis.sql`
+- `rpt_top_countries_by_cases.sql`
+- `rpt_covid_trends_over_time.sql`
+- `rpt_correlation_analysis.sql`
 
 **When to use:**
-- Initial development
+- Initial development and exploration
 - Need specific transformations not in fact table
-- Exploring new analytical patterns
+- Custom analysis and ad-hoc queries
+- Testing new analytical patterns
 
 **Pros:**
 - More flexible
 - Don't depend on fact table
+- Direct access to silver data
+- Can implement custom logic
 
 **Cons:**
 - More complex SQL
 - Repeated calculations
 - Potential inconsistency
+- Slower performance
 
-### Option 2: Fact-Based Models
+### Option 2: Data Mart Models (mart_*)
 **Files:**
-- `gold_top_countries_from_fact.sql`
-- `gold_trends_from_fact.sql`
-- `gold_correlation_from_fact.sql`
+- `mart_top_countries.sql`
+- `mart_covid_trends.sql`
+- `mart_correlation_metrics.sql`
 
 **When to use:**
 - Production analytics
-- Standard reporting
+- Standard reporting and dashboards
 - Performance-critical queries
+- Regular business use cases
 
 **Pros:**
 - Simpler SQL
 - Faster performance
 - Guaranteed consistency
 - Easier to maintain
+- Leverages pre-calculated metrics
 
 **Cons:**
 - Depends on fact table
 - Limited to pre-calculated metrics
+- Less flexible
 
 ### Our Recommendation
 
-**For Production:** Use fact-based models (Option 2)
+**For Production:** Use data mart models (Option 2) ⭐
 - Better performance
 - Easier maintenance
 - Consistent results
+- Optimized for dashboards
 
-**For Development/Exploration:** Use direct silver models (Option 1)
+**For Development/Exploration:** Use report models (Option 1)
 - More flexibility
 - Can test new metrics
+- Custom transformations
 - Don't need to rebuild fact table
 
 ## Usage Examples
@@ -432,4 +441,5 @@ SELECT AVG(case_fatality_ratio_pct) FROM fct_covid_daily;
 ✅ **Query performance is excellent** (pre-aggregated, indexed)
 
 The fact table is your friend! It makes analytics simpler, faster, and more consistent. 🚀
+
 

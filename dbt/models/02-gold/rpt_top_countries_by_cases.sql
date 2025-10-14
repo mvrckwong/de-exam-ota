@@ -1,12 +1,12 @@
 {{
     config(
         materialized='table',
-        tags=['gold', 'analytics', 'top_values']
+        tags=['gold', 'report', 'top_values', 'from_silver']
     )
 }}
 
 /*
-    Gold Model: Top 5 Countries by Confirmed Cases
+    Report Model: Top 5 Countries by Confirmed Cases
     
     Purpose: Answers the question - "What are the top 5 most common values 
     in a particular column, and what is their frequency?"

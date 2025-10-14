@@ -92,13 +92,16 @@ models:
         tests:
           - not_null
 
-  - name: gold_top_countries_by_cases
+  - name: rpt_top_countries_by_cases
     description: >
-      Top 5 countries with highest confirmed COVID-19 cases. Answers the analytical question:
-      "What are the top 5 most common values in a particular column, and what is their frequency?"
+      Report: Top 5 countries with highest confirmed COVID-19 cases. 
+      Answers the analytical question: "What are the top 5 most common values 
+      in a particular column, and what is their frequency?"
       
-      This model provides frequency analysis of countries by their confirmed case counts,
+      This report provides frequency analysis of countries by their confirmed case counts,
       including percentage of global cases and severity tiers.
+      
+      Built directly from silver layer with complex transformations.
     columns:
       - name: rank_by_cases
         description: Ranking position (1-5) based on total confirmed cases
@@ -132,13 +135,15 @@ models:
       - name: severity_tier
         description: Classification of impact severity (Highest, Very High, High)
 
-  - name: gold_covid_trends_over_time
+  - name: rpt_covid_trends_over_time
     description: >
-      Time series analysis of COVID-19 metrics tracking changes over time. Answers the question:
-      "How does a particular metric change over time within the dataset?"
+      Report: Time series analysis of COVID-19 metrics tracking changes over time. 
+      Answers the question: "How does a particular metric change over time within the dataset?"
       
       Includes daily metrics, day-over-day changes, 7-day moving averages, and trend indicators
       for confirmed cases, deaths, testing, and hospitalization rates at the state level.
+      
+      Built directly from silver layer with complex window functions and calculations.
     columns:
       - name: snapshot_date
         description: Date of the snapshot
@@ -171,10 +176,11 @@ models:
           - accepted_values:
               values: ['Increasing', 'Decreasing', 'Stable', 'Unknown']
 
-  - name: gold_correlation_analysis
+  - name: rpt_correlation_analysis
     description: >
-      Statistical correlation analysis between key COVID-19 metrics. Answers the question:
-      "Is there a correlation between two specific columns? Explain your findings."
+      Report: Statistical correlation analysis between key COVID-19 metrics. 
+      Answers the question: "Is there a correlation between two specific columns? 
+      Explain your findings."
       
       Calculates Pearson correlation coefficients between pairs of metrics:
       - Confirmed Cases vs Deaths
@@ -183,6 +189,8 @@ models:
       - Confirmed Cases vs Case Fatality Ratio
       
       Includes interpretation of correlation strength, direction, and statistical confidence.
+      
+      Built directly from silver layer with statistical analysis.
     columns:
       - name: metric_pair
         description: The two metrics being correlated
@@ -319,4 +327,62 @@ models:
         tests:
           - accepted_values:
               values: ['Very High Severity', 'High Severity', 'Moderate Severity', 'Low Severity', 'Very Low Severity']
+
+  - name: mart_top_countries
+    description: >
+      Data Mart: Simplified top countries analysis built from the fact table.
+      Optimized version that answers: "What are the top 5 most common values 
+      in a particular column, and what is their frequency?"
+      
+      Leverages pre-calculated metrics from fct_covid_daily for better performance.
+    columns:
+      - name: rank_by_cases
+        description: Ranking position (1-5) based on total confirmed cases
+        tests:
+          - not_null
+      - name: country_region
+        description: Country name
+        tests:
+          - not_null
+      - name: total_confirmed_cases
+        description: Total confirmed cases
+
+  - name: mart_covid_trends
+    description: >
+      Data Mart: Simplified COVID trends analysis built from the fact table.
+      Answers: "How does a particular metric change over time within the dataset?"
+      
+      Leverages pre-calculated rolling averages, day-over-day changes, and trend 
+      indicators from fct_covid_daily for optimal performance.
+    columns:
+      - name: report_date
+        description: Date of the report
+        tests:
+          - not_null
+      - name: province_state
+        description: US state or province
+      - name: cases_7day_moving_avg
+        description: Pre-calculated 7-day moving average from fact table
+      - name: case_trend
+        description: Trend direction from fact table
+
+  - name: mart_correlation_metrics
+    description: >
+      Data Mart: Statistical correlation analysis built from the fact table.
+      Answers: "Is there a correlation between two specific columns?"
+      
+      Uses centralized metrics from fct_covid_daily ensuring consistency across 
+      all correlation calculations. Includes additional correlation pairs not 
+      available in the direct silver report.
+    columns:
+      - name: metric_pair
+        description: The two metrics being correlated
+        tests:
+          - not_null
+      - name: correlation_coefficient
+        description: Pearson correlation coefficient (-1 to 1)
+        tests:
+          - not_null
+      - name: r_squared
+        description: R-squared coefficient of determination
 

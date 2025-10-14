@@ -1,12 +1,12 @@
 {{
     config(
         materialized='table',
-        tags=['gold', 'analytics', 'time_series']
+        tags=['gold', 'report', 'time_series', 'from_silver']
     )
 }}
 
 /*
-    Gold Model: COVID-19 Trends Over Time
+    Report Model: COVID-19 Trends Over Time
     
     Purpose: Answers the question - "How does a particular metric change 
     over time within the dataset?"

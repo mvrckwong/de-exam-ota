@@ -1,7 +1,7 @@
 {{
     config(
         materialized='table',
-        tags=['gold', 'aggregation', 'country']
+        tags=['gold', 'aggregation', 'country', 'from_fact']
     )
 }}
 
@@ -10,6 +10,9 @@
     
     Purpose: Provides comprehensive country-level aggregated metrics from
     global data for international comparative analysis.
+    
+    Built from: fct_covid_daily (fact table)
+    This ensures consistency with all other gold models and leverages the unified data source.
 */
 
 with country_totals as (
@@ -17,7 +20,7 @@ with country_totals as (
         country_region,
         count(*) as total_records,
         count(distinct province_state) as provinces_reporting,
-        count(distinct location_key) as unique_locations,
+        count(distinct location_name) as unique_locations,
         sum(confirmed_cases) as total_confirmed_cases,
         sum(total_deaths) as total_deaths,
         sum(total_recovered) as total_recovered,
@@ -26,7 +29,7 @@ with country_totals as (
         avg(case_fatality_ratio_pct) as avg_case_fatality_ratio_pct,
         max(confirmed_cases) as max_single_location_cases,
         max(total_deaths) as max_single_location_deaths
-    from {{ ref('silver_covid_cases_global') }}
+    from {{ ref('fct_covid_daily') }}
     where country_region is not null
         and country_region != 'Unknown'
     group by country_region

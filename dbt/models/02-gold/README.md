@@ -6,6 +6,20 @@ This directory contains gold layer models that provide business-ready, analytica
 
 The gold layer is built on a dimensional modeling architecture with **`fct_covid_daily`** serving as the core fact table that combines all silver layer data into a unified, analytics-ready structure.
 
+## Naming Conventions (dbt Best Practices)
+
+Following dbt naming conventions, models are prefixed by their purpose:
+
+| Prefix | Purpose | When to Use |
+|--------|---------|-------------|
+| `fct_` | **Fact Tables** - Granular, event-level data | Core data with defined grain |
+| `agg_` | **Aggregations** - Pre-computed summaries | Performance-optimized summaries |
+| `rpt_` | **Reports** - Answer specific business questions | Complex analysis from silver layer |
+| `mart_` | **Data Marts** - Business-ready, optimized marts | Simplified queries from fact table |
+| `dim_` | **Dimensions** - Descriptive reference data | Lookup tables (future) |
+
+**Note:** No "gold" prefix needed - the folder structure (`02-gold`) defines the layer.
+
 ## Architecture
 
 ### 🏗️ Fact Table (Core Foundation)
@@ -43,11 +57,14 @@ The gold layer is built on a dimensional modeling architecture with **`fct_covid
 
 ## Model Categories
 
-### 📊 Analytical Models (Gold)
+### 📊 Report Models (rpt_*)
 
-These models answer specific analytical questions with clean, documented insights.
+Complex analytical reports built directly from silver layer. Use these when you need:
+- Custom transformations not available in the fact table
+- Exploration and ad-hoc analysis
+- Specific business logic from source data
 
-#### 1. `gold_top_countries_by_cases`
+#### 1. `rpt_top_countries_by_cases`
 **Question Answered:** *"What are the top 5 most common values in a particular column, and what is their frequency?"*
 
 - **Purpose:** Identifies the top 5 countries with the highest confirmed COVID-19 cases
@@ -56,12 +73,13 @@ These models answer specific analytical questions with clean, documented insight
   - Total confirmed cases
   - Percentage of global cases
   - Severity tier classification
+- **Source:** Built from `silver_covid_cases_global`
 - **Use Cases:**
   - Executive dashboards showing global hotspots
   - Comparative country analysis
   - Resource allocation planning
 
-#### 2. `gold_covid_trends_over_time`
+#### 2. `rpt_covid_trends_over_time`
 **Question Answered:** *"How does a particular metric change over time within the dataset?"*
 
 - **Purpose:** Tracks the progression of COVID-19 metrics over time at the daily level
@@ -70,12 +88,13 @@ These models answer specific analytical questions with clean, documented insight
   - Day-over-day changes and percentage changes
   - 7-day moving averages for trend smoothing
   - Trend direction indicators (Increasing/Decreasing/Stable)
+- **Source:** Built from `silver_covid_cases_us`
 - **Use Cases:**
   - Time series visualization
   - Trend analysis and forecasting
   - Policy impact assessment
 
-#### 3. `gold_correlation_analysis`
+#### 3. `rpt_correlation_analysis`
 **Question Answered:** *"Is there a correlation between two specific columns? Explain your findings."*
 
 - **Purpose:** Calculates statistical correlations between key COVID-19 metrics
@@ -92,6 +111,7 @@ These models answer specific analytical questions with clean, documented insight
   - Statistical confidence levels based on sample size
   - Detailed interpretations of findings
 
+- **Source:** Built from `silver_covid_cases_us`
 - **Use Cases:**
   - Understanding relationships between metrics
   - Validating hypotheses about disease spread
@@ -103,30 +123,36 @@ These models answer specific analytical questions with clean, documented insight
 - **Positive Correlation (Hospitalization vs Mortality):** Higher hospitalization rates correlate with more severe outcomes, indicating the importance of healthcare capacity.
 - **Negative Correlation Possible (Cases vs CFR):** More widespread testing (more cases) may show lower fatality ratios as mild cases are detected.
 
-### 🔄 Fact-Based Analytical Models
+### 🎯 Data Mart Models (mart_*)
 
-Simplified versions of analytical models that demonstrate querying from the fact table:
+Optimized business marts built from the fact table. Use these for:
+- Production dashboards and reporting
+- Regular business use cases
+- Best performance and consistency
 
-#### 7. `gold_top_countries_from_fact`
+#### 4. `mart_top_countries`
 - **Based on:** `fct_covid_daily`
-- **Demonstrates:** How to query the fact table for top values analysis
-- **Benefits:** Simpler SQL, leverages pre-calculated metrics
+- **Purpose:** Production-ready top countries analysis
+- **Benefits:** Simpler SQL, leverages pre-calculated metrics, better performance
+- **Recommendation:** Use this over `rpt_top_countries_by_cases` for production
 
-#### 8. `gold_trends_from_fact`
+#### 5. `mart_covid_trends`
 - **Based on:** `fct_covid_daily`
-- **Demonstrates:** Time series analysis using fact table
+- **Purpose:** Production-ready time series analysis
 - **Benefits:** No need to recalculate rolling averages or day-over-day changes
+- **Recommendation:** Use this over `rpt_covid_trends_over_time` for production
 
-#### 9. `gold_correlation_from_fact`
+#### 6. `mart_correlation_metrics`
 - **Based on:** `fct_covid_daily`
-- **Demonstrates:** Statistical correlation using centralized metrics
+- **Purpose:** Production-ready statistical correlation analysis
 - **Benefits:** Consistent data source, additional correlation pairs possible
+- **Recommendation:** Use this over `rpt_correlation_analysis` for production
 
-### 📈 Aggregation Models
+### 📈 Aggregation Models (agg_*)
 
 Pre-computed aggregations optimized for fast query performance and reporting.
 
-#### 4. `agg_daily_summary`
+#### 7. `agg_daily_summary`
 - **Granularity:** Daily, national (US) level
 - **Purpose:** High-level daily aggregated metrics across all US states
 - **Key Metrics:**
@@ -141,7 +167,7 @@ Pre-computed aggregations optimized for fast query performance and reporting.
   - National trend monitoring
   - Public health reporting
 
-#### 5. `agg_state_summary`
+#### 8. `agg_state_summary`
 - **Granularity:** State level (US)
 - **Purpose:** Comprehensive state-level aggregated metrics for comparison
 - **Key Metrics:**
@@ -155,7 +181,7 @@ Pre-computed aggregations optimized for fast query performance and reporting.
   - Regional resource allocation
   - Performance benchmarking
 
-#### 6. `agg_country_summary`
+#### 9. `agg_country_summary`
 - **Granularity:** Country level (Global)
 - **Purpose:** International comparative analysis with global rankings
 - **Key Metrics:**
@@ -180,28 +206,33 @@ All models include comprehensive data quality tests defined in `schema.yml`:
 
 ## Best Practices Implemented
 
-### 1. **Clear Documentation**
+### 1. **Clear Naming Conventions**
+- Prefixes indicate model purpose (`fct_`, `agg_`, `rpt_`, `mart_`)
+- No redundant layer prefixes (folder structure defines layer)
+- Descriptive names that explain business purpose
+
+### 2. **Clear Documentation**
 - Every model includes detailed header comments explaining purpose and usage
 - Column-level documentation in schema.yml
 - README with comprehensive explanations
 
-### 2. **Performance Optimization**
+### 3. **Performance Optimization**
 - Materialized as tables for fast query performance
 - Pre-aggregated metrics to avoid repeated calculations
 - Efficient CTEs for readability and optimization
 
-### 3. **Code Organization**
+### 4. **Code Organization**
 - Logical CTEs with clear naming
 - Separation of concerns (raw aggregation → derived metrics → final output)
 - Consistent formatting and style
 
-### 4. **Analytics Best Practices**
+### 5. **Analytics Best Practices**
 - Moving averages for trend smoothing
 - Percentile rankings for relative comparisons
 - Statistical measures (correlation, confidence levels)
 - Derived metrics calculated consistently
 
-### 5. **Business Context**
+### 6. **Business Context**
 - Classifications and tiers for easy interpretation
 - Percentage calculations for relative comparisons
 - Trend indicators for quick insights
@@ -211,19 +242,25 @@ All models include comprehensive data quality tests defined in `schema.yml`:
 
 ```
 Silver Layer
-├── silver_covid_cases_us       ─┐
-└── silver_covid_cases_global   ─┤
-                                 │
-                                 ▼
-                        fct_covid_daily (CORE FACT TABLE)
-                                 │
+├── silver_covid_cases_us       ─┬─────────────────────┐
+└── silver_covid_cases_global   ─┘                     │
+                                 │                      │ (exploration only)
+                                 ▼                      ▼
+                        fct_covid_daily         Report Models (rpt_*)
+                     (SINGLE SOURCE OF TRUTH)   ├── rpt_top_countries...
+                                 │               ├── rpt_covid_trends...
+                                 │               └── rpt_correlation...
         ┌────────────────────────┼────────────────────────┐
         ▼                        ▼                        ▼
-   Analytical Models      Aggregation Models      Fact-Based Models
-   ├── gold_top_...      ├── agg_daily_...       ├── gold_top_..._from_fact
-   ├── gold_trends_...   ├── agg_state_...       ├── gold_trends_from_fact
-   └── gold_correl_...   └── agg_country_...     └── gold_correl_from_fact
+  Aggregation Models      Data Marts (mart_*)    (Future dimensions)
+  ├── agg_daily_...       ├── mart_top_countries
+  ├── agg_state_...       ├── mart_covid_trends
+  └── agg_country_...     └── mart_correlation_...
+  
+  ALL PRODUCTION MODELS USE FACT TABLE ✅
 ```
+
+**Architecture Principle:** The fact table is the **single source of truth** for all production models (aggregations and marts). Report models can access silver directly for exploration and custom analysis, but production dashboards should use models built from the fact table.
 
 ## Usage Examples
 
@@ -267,45 +304,39 @@ GROUP BY country_region
 ORDER BY total_cases DESC;
 ```
 
-### Query Top Countries
+### Query Reports
+
 ```sql
+-- Top countries report
 SELECT 
     rank_by_cases,
     country_region,
     total_confirmed_cases,
     pct_of_global_cases,
     severity_tier
-FROM {{ ref('gold_top_countries_by_cases') }}
+FROM {{ ref('rpt_top_countries_by_cases') }}
 ORDER BY rank_by_cases;
 ```
 
-### Track State Trends Over Time
+### Query Data Marts
+
 ```sql
+-- Trends data mart (optimized)
 SELECT 
-    snapshot_date,
+    report_date,
     province_state,
-    new_cases_vs_prev_day,
     cases_7day_moving_avg,
-    trend_direction
-FROM {{ ref('gold_covid_trends_over_time') }}
+    case_trend,
+    severity_category
+FROM {{ ref('mart_covid_trends') }}
 WHERE province_state = 'California'
-ORDER BY snapshot_date DESC;
+ORDER BY report_date DESC;
 ```
 
-### Analyze Correlations
-```sql
-SELECT 
-    metric_pair,
-    correlation_coefficient,
-    correlation_strength,
-    correlation_direction,
-    interpretation
-FROM {{ ref('gold_correlation_analysis') }}
-ORDER BY abs(correlation_coefficient) DESC;
-```
+### Query Aggregations
 
-### Daily National Summary
 ```sql
+-- Daily national summary
 SELECT 
     snapshot_date,
     new_cases_today,
@@ -317,45 +348,55 @@ ORDER BY snapshot_date DESC
 LIMIT 30;
 ```
 
-## Model Comparison: Direct Silver vs Fact-Based
+## Model Comparison: Reports vs Data Marts
 
-| Aspect | Direct Silver Models | Fact-Based Models |
-|--------|---------------------|-------------------|
-| **Complexity** | More complex, joins multiple sources | Simpler, single source |
+| Aspect | Report Models (rpt_*) | Data Mart Models (mart_*) |
+|--------|----------------------|---------------------------|
+| **Source** | Silver layer (direct) | Fact table |
+| **Complexity** | More complex transformations | Simpler, leverages pre-calculated metrics |
 | **Performance** | Repeated calculations | Pre-calculated metrics |
 | **Consistency** | May have calculation differences | Guaranteed consistency |
 | **Maintenance** | Changes needed in multiple places | Changes propagate from fact table |
-| **Use Case** | Initial development, specific needs | Production, standard analytics |
+| **Use Case** | Exploration, custom analysis | Production dashboards, regular reporting |
+| **Recommendation** | Development and ad-hoc | **Production** ⭐ |
 
-**Recommendation:** Use fact-based models for production analytics and direct silver models when you need specific transformations not available in the fact table.
+**Production Guidance:** Use data marts (`mart_*`) for dashboards and regular reporting. Use reports (`rpt_*`) for exploration and custom analysis.
 
 ## Maintenance
 
 - **Dependencies:** 
-  - Fact table depends on silver layer models
-  - Analytical and aggregation models depend on either silver layer or fact table
+  - **Fact table** depends on silver layer models
+  - **Report models** depend on silver layer (for exploration)
+  - **Data mart models** depend on fact table ✅
+  - **Aggregation models** depend on fact table ✅
+  - **All production models** use fact table as single source of truth
 - **Refresh Frequency:** Should be refreshed when silver layer is updated
 - **Build Order:**
   1. Silver layer models
   2. `fct_covid_daily` (core fact table)
-  3. All gold layer analytical and aggregation models
+  3. All gold layer models (reports, marts, aggregations)
 - **Testing:** Run `dbt test --select 02-gold` to validate data quality
 
 ## Tags
 
 Models are tagged for easy selection:
-- `gold` - All gold layer models
-- `fact` - Fact table models
-- `core` - Core/foundational models
-- `analytics` - Analytical insight models
-- `aggregation` - Pre-computed aggregation models
-- `fact_based` - Models that query from fact table
-- `time_series` - Time-based analysis models
-- `correlation` - Statistical correlation models
-- `top_values` - Frequency/ranking analysis
-- `daily` - Daily grain aggregations
-- `state` - State-level aggregations
-- `country` - Country-level aggregations
+
+| Tag | Purpose | Models |
+|-----|---------|--------|
+| `gold` | All gold layer models | All |
+| `fact` | Fact table models | `fct_covid_daily` |
+| `core` | Core/foundational models | `fct_covid_daily` |
+| `report` | Report models | `rpt_*` |
+| `mart` | Data mart models | `mart_*` |
+| `aggregation` | Pre-computed aggregations | `agg_*` |
+| `from_silver` | Built directly from silver | `rpt_*` |
+| `from_fact` | Built from fact table | `mart_*` |
+| `time_series` | Time-based analysis | Trend models |
+| `correlation` | Statistical correlation | Correlation models |
+| `top_values` | Frequency/ranking analysis | Top countries models |
+| `daily` | Daily grain aggregations | `agg_daily_summary` |
+| `state` | State-level aggregations | `agg_state_summary` |
+| `country` | Country-level aggregations | `agg_country_summary` |
 
 Run specific tags:
 ```bash
@@ -365,32 +406,36 @@ dbt run --select tag:gold
 # Build only the fact table
 dbt run --select tag:fact
 
-# Build fact-based analytical models
-dbt run --select tag:fact_based
+# Build data marts (production models)
+dbt run --select tag:mart
+
+# Build reports (exploration models)
+dbt run --select tag:report
 
 # Build aggregations
 dbt run --select tag:aggregation
 
-# Test all analytics
-dbt test --select tag:analytics
+# Test all models
+dbt test --select tag:gold
 ```
 
 ## Performance Tips
 
 1. **Start with the Fact Table:** Always build `fct_covid_daily` first as it's the foundation
-2. **Use Fact-Based Models:** They're optimized and leverage pre-calculated metrics
-3. **Materialize as Tables:** Gold models are materialized as tables for fast query performance
-4. **Incremental Builds:** Consider incremental materialization for very large fact tables
-5. **Indexing:** Add indexes on frequently filtered columns (report_date, country_region, province_state)
+2. **Use Data Marts for Production:** They're optimized and leverage pre-calculated metrics
+3. **Use Reports for Exploration:** More flexible for custom analysis
+4. **Materialize as Tables:** Gold models are materialized as tables for fast query performance
+5. **Incremental Builds:** Consider incremental materialization for very large fact tables
+6. **Indexing:** Add indexes on frequently filtered columns (report_date, country_region, province_state)
 
-## Best Practices Implemented
+## Best Practices Summary
 
 ✅ **Dimensional Modeling** - Fact table with clear grain and dimensions  
 ✅ **Single Source of Truth** - Centralized fact table for all analytics  
+✅ **Clear Naming** - Prefixes indicate model purpose (`fct_`, `agg_`, `rpt_`, `mart_`)  
 ✅ **Pre-calculated Metrics** - Avoid repeated computation  
 ✅ **Clear Documentation** - Every model and column documented  
 ✅ **Comprehensive Testing** - Data quality tests on all models  
 ✅ **Performance Optimization** - Table materialization, efficient CTEs  
 ✅ **Separation of Concerns** - Fact table separate from analytical logic  
-✅ **Flexibility** - Support both direct and fact-based querying patterns
-
+✅ **Flexibility** - Reports for exploration, marts for production

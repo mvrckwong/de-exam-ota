@@ -1,7 +1,7 @@
 {{
     config(
         materialized='table',
-        tags=['gold', 'aggregation', 'state']
+        tags=['gold', 'aggregation', 'state', 'from_fact']
     )
 }}
 
@@ -10,13 +10,16 @@
     
     Purpose: Provides comprehensive state-level aggregated metrics for
     comparative analysis across US states.
+    
+    Built from: fct_covid_daily (fact table)
+    This ensures consistency with all other gold models and leverages pre-calculated metrics.
 */
 
 with state_totals as (
     select
         province_state,
-        count(distinct snapshot_date) as days_reporting,
-        max(snapshot_date) as latest_report_date,
+        count(distinct report_date) as days_reporting,
+        max(report_date) as latest_report_date,
         max(confirmed_cases) as total_confirmed_cases,
         max(total_deaths) as total_deaths,
         max(total_recovered) as total_recovered,
@@ -31,8 +34,9 @@ with state_totals as (
         -- Calculate peak values
         max(confirmed_cases) as peak_confirmed_cases,
         max(total_deaths) as peak_deaths
-    from {{ ref('silver_covid_cases_us') }}
-    where province_state is not null
+    from {{ ref('fct_covid_daily') }}
+    where data_source = 'US'
+        and province_state is not null
     group by province_state
 ),
 
