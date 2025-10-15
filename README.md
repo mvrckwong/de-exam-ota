@@ -268,9 +268,15 @@ Production-ready analytics dashboard connected to the PostgreSQL warehouse (gold
 
 ![Metabase Dashboard](/.images/output_v1.png)
 
-Some of docker compose files are deployed inside a portainer and/or server using TrueNAS.
+Some of docker compose files or containers are deployed inside a portainer and/or server using TrueNAS.
 
 ![Docker Containers](/.images/output_server_containers_v1.png)
+
+Sample schemas and tables inside the Postgres.
+
+![Bronze Data](/.images/output_bronze_layer_v1.png)
+
+![Schema](/.images/output_schema_development_v1.png)
 
 **Key Features:**
 - Top countries by confirmed cases
