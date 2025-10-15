@@ -28,6 +28,10 @@ This project implements a complete data engineering solution for COVID-19 data a
 
 ## Architecture
 
+We are going to be using ELT Architecture or Medallion Architecture. The architecture works on small, and even large scale or terabytes, of datasets.
+
+![Data Architecture](/.images/output_architecture.png)
+
 ```
 ┌─────────────────┐
 │   Data Source   │  COVID-19 Raw Data (US & Global)
