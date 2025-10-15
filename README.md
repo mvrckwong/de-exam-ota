@@ -116,6 +116,12 @@ We are going to be using ELT Architecture or Medallion Architecture. The archite
    - Open browser: `http://localhost:8080` for Airflow
    - Connect to PostgreSQL warehouse on port `50002`
 
+## Current Setup
+
+Some of docker compose files or containers are deployed inside a portainer and/or server using TrueNAS.
+
+![Docker Containers](/.images/output_server_containers_v1.png)
+
 ## Connection Details
 
 In Airflow, to create connection amongst different resources, DBT Container and Postgres, you need to add the following:
@@ -282,10 +288,6 @@ For this example or repository, the environment variables is placed under the .e
 Production-ready analytics dashboard connected to the PostgreSQL warehouse (gold layer tables only):
 
 ![Metabase Dashboard](/.images/output_v1.png)
-
-Some of docker compose files or containers are deployed inside a portainer and/or server using TrueNAS.
-
-![Docker Containers](/.images/output_server_containers_v1.png)
 
 Sample schemas and tables inside the Postgres.
 
