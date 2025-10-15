@@ -87,25 +87,36 @@ This project implements a complete data engineering solution for COVID-19 data a
    uv sync --group dbt
    ```
 
-3. **Deploy PostgreSQL data warehouse**
+3. **Deploy Airflow**
+   ```bash
+   task deploy_airflow
+   ```
+
+4. **Deploy PostgreSQL data warehouse**
    ```bash
    task deploy_postgres
    ```
 
-4. **Run dbt transformations**
+5. **Run dbt transformations**
    ```bash
    task deploy_dbt
    ```
 
-5. **Launch Metabase for visualization**
+6. **Launch Metabase for visualization**
    ```bash
    task deploy_metabase
    ```
 
-6. **Access Metabase**
-   - Open browser: `http://localhost:30001`
+7. **Access Metabase**
+   - Open browser: `http://localhost:30001` for Metabase
+   - Open browser: `http://localhost:8080` for Airflow
    - Connect to PostgreSQL warehouse on port `50002`
-   - Credentials: `warehouse/warehouse/warehouse`
+
+## Connection Details
+
+In Airflow, to create connection amongst different resources, DBT Container and Postgres, you need to add the following:
+
+![Metabase Dashboard](/.images/output_connections_v1.png)
 
 ## Project Structure
 
