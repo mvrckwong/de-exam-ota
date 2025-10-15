@@ -116,7 +116,11 @@ We are going to be using ELT Architecture or Medallion Architecture. The archite
    - Open browser: `http://localhost:8080` for Airflow
    - Connect to PostgreSQL warehouse on port `50002`
 
-## Current Setup
+## Current Setup (Personal Setup)
+
+Now, the containers looks like.
+
+![Docker Desktop Containers](/.images/output_containers.png)
 
 Some of docker compose files or containers are deployed inside a portainer and/or server using TrueNAS.
 
