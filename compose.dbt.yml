@@ -34,8 +34,24 @@ services:
     command: ["compile"]
     
   api:
-    <<: *dbt-common-config
+    build:
+      context: .
+      dockerfile: Dockerfile.dbt
     entrypoint: ["uv"]
+    environment:
+      DBT_PROFILES_DIR: /root/.dbt
+      DBT_PROJECT_DIR: /usr/app
+      ENVIRONMENT: prod
+      API_KEY: qsyDQ1uKyqtwjRgwIZAeSQGQzmDOwu66xJxQQljpKxPt7f9RoW6Okc5QJy0d91UxTi8
+    volumes:
+      - ./dbt/models:/usr/app/dbt/models
+      - ./dbt/macros:/usr/app/dbt/macros
+      - ./dbt/tests:/usr/app/dbt/tests
+      - ./dbt/snapshots:/usr/app/dbt/snapshots
+      - ./dbt/analyses:/usr/app/dbt/analyses
+      - ./dbt/seeds:/usr/app/dbt/seeds
+      - ./target:/usr/app/target
+      - ./logs:/usr/app/logs
     networks:
       - dbt-network
       - shared-db-network

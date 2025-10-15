@@ -7,7 +7,7 @@ x-airflow-common:
         dockerfile: Dockerfile.airflow
     environment:
         &airflow-common-env
-        AIRFLOW_CONFIG: '${AIRFLOW_HOME}/config/airflow.cfg'
+        AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
         AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_KEY}
 
         # Core Settings
@@ -49,10 +49,10 @@ x-airflow-common:
         
         HOST_IP: ${HOST_IP:-host.docker.internal}
     volumes:
-        - ./dags:${AIRFLOW_HOME}/dags
-        - ./config:${AIRFLOW_HOME}/config
-        - ./plugins:${AIRFLOW_HOME}/plugins
-        - ./logs:${AIRFLOW_HOME}/logs
+        - ./dags:/opt/airflow/dags
+        - ./config:/opt/airflow/config
+        - ./plugins:/opt/airflow/plugins
+        - ./logs:/opt/airflow/logs
     user: 
         "${AIRFLOW_UID:-50000}:0"
     env_file:
@@ -242,8 +242,8 @@ services:
             echo "   https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html#before-you-begin"
             echo
             fi
-            mkdir -p ${AIRFLOW_HOME}/{logs,dags,plugins,config}
-            chown -R "${AIRFLOW_UID}:0" ${AIRFLOW_HOME}/{logs,dags,plugins,config}
+            mkdir -p /opt/airflow/{logs,dags,plugins,config}
+            chown -R "${AIRFLOW_UID}:0" /opt/airflow/{logs,dags,plugins,config}
             exec /entrypoint airflow version
         environment:
             <<: *airflow-common-env

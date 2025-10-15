@@ -8,20 +8,7 @@ from json import dumps
 default_args = {
     'owner': 'data-engineering',
     'depends_on_past': False,
-    'email': ['data-alerts@example.com'],
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 2,
-    'retry_delay': timedelta(minutes=5),
-    'execution_timeout': timedelta(hours=2),
     'start_date': datetime(2024, 1, 1),
-}
-
-# Define additional DAG configuration
-dag_args = {
-    'max_active_runs': 1,
-    'max_active_tasks': 3,
-    'dagrun_timeout': timedelta(hours=4),
 }
 
 with DAG(
@@ -31,8 +18,7 @@ with DAG(
      tags=['ota', 'dbt'],
      catchup=False,
      schedule=None,
-     default_args=default_args,
-     **dag_args
+     default_args=default_args
 ) as dag:
 
       run_dbt_silver_models = HttpOperator(
