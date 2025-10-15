@@ -126,6 +126,10 @@ Some of my containers are deployed inside a Portainer and server using TrueNAS.
 
 ![Docker Containers](/.images/output_server_containers_v1.png)
 
+Here is the guide on how the connection works amongst the containers.
+
+![Docker Connections](/.images/output_containers_conn.png)
+
 ## Connection Details
 
 In Airflow, to create connection amongst different resources, DBT Container and Postgres, you need to add the following:
