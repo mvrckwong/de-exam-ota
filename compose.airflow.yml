@@ -49,10 +49,10 @@ x-airflow-common:
         
         HOST_IP: ${HOST_IP:-host.docker.internal}
     volumes:
-        - ${AIRFLOW_PROJ_DIR}/dags:${AIRFLOW_HOME}/dags
-        - ${AIRFLOW_PROJ_DIR}/config:${AIRFLOW_HOME}/config
-        - ${AIRFLOW_PROJ_DIR}/plugins:${AIRFLOW_HOME}/plugins
-        - ${AIRFLOW_PROJ_DIR}/logs:${AIRFLOW_HOME}/logs
+        - ./dags:${AIRFLOW_HOME}/dags
+        - ./config:${AIRFLOW_HOME}/config
+        - ./plugins:${AIRFLOW_HOME}/plugins
+        - ./logs:${AIRFLOW_HOME}/logs
     user: 
         "${AIRFLOW_UID:-50000}:0"
     env_file:
@@ -66,15 +66,15 @@ x-airflow-common:
     networks:
         - airflow-network
         - shared-airflow-network
-    extra_hosts:
-        - "host.docker.internal:host-gateway"
+    # extra_hosts:
+    #     - "host.docker.internal:host-gateway"
 
 services:
     postgres:
         image: postgres:13
         user: "${POSTGRES_TARGET_UID:-999}:${POSTGRES_TARGET_GID:-999}"
         ports:
-            - "${PORT_POSTGRES}:5432"
+            - "50010:5432"
         environment:
             POSTGRES_USER: ${POSTGRES_USER}
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -112,7 +112,7 @@ services:
         <<: *airflow-common
         command: ["api-server"]
         ports:
-          - "${PORT_AIRFLOW}:8080"
+          - "8080:8080"
         healthcheck:
             test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/version"]
             interval: 30s
