@@ -269,13 +269,7 @@ MB_POSTGRES_PASSWORD=<secure-password>
 MB_POSTGRES_DB=metabase
 ```
 
-### Health Checks
-
-All services include health checks. Verify status:
-
-```bash
-docker ps --format "table {{.Names}}\t{{.Status}}"
-```
+For the environment variables, I have placed everything on the .env.example and exposed everything for this example.
 
 ## Output Examples
 
