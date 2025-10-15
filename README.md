@@ -273,7 +273,7 @@ MB_POSTGRES_PASSWORD=<secure-password>
 MB_POSTGRES_DB=metabase
 ```
 
-For the environment variables, I have placed everything on the .env.example and exposed everything for this example.
+For this example or repository, the environment variables is placed under the .env.example.
 
 ## Output Examples
 
