@@ -116,7 +116,7 @@ This project implements a complete data engineering solution for COVID-19 data a
 
 In Airflow, to create connection amongst different resources, DBT Container and Postgres, you need to add the following:
 
-![Metabase Dashboard](/.images/output_connections_v1.png)
+![Airflow Connections](/.images/output_connections_v1.png)
 
 ## Project Structure
 
@@ -139,6 +139,12 @@ de-exam-ota/
 ```
 
 ## Usage
+
+### Running the DAGs, Tasks or Pipelines
+
+Inside Airflow, you have the following data pipeline. One is for ingesting the data, another is for transformating the data.
+
+![Airflow Dags](/.images/output_dags_v1.png)
 
 ### Available Tasks
 
