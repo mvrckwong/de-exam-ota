@@ -1,7 +1,7 @@
 {{
     config(
         materialized='table',
-        tags=['gold', 'mart', 'time_series', 'from_fact']
+        tags=['mart']
     )
 }}
 

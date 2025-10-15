@@ -1,7 +1,7 @@
 {{
     config(
         materialized='table',
-        tags=['gold', 'report', 'correlation', 'from_fact']
+        tags=['report']
     )
 }}
 

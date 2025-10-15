@@ -1,7 +1,7 @@
 {{
     config(
         materialized='table',
-        tags=['gold', 'aggregation', 'country', 'from_fact']
+        tags=['agg']
     )
 }}
 
