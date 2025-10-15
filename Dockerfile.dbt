@@ -1,0 +1,80 @@
+# Stage 1: Builder - Install dependencies
+ARG DBT_VERSION=1.9.0
+FROM ghcr.io/dbt-labs/dbt-postgres:$DBT_VERSION AS builder
+
+# Set environment variable
+ENV BUILD_DIR=/build
+
+# Set working directory
+WORKDIR ${BUILD_DIR}
+
+# Copy necessary files
+COPY ./packages.yml ${BUILD_DIR}/packages.yml
+COPY ./dbt_project.yml ${BUILD_DIR}/dbt_project.yml
+
+# Run dbt deps
+RUN ["dbt", "deps"]
+
+# Check if dbt_packages exists
+RUN [ -d "dbt_packages" ] || (echo "dbt_packages directory not found" && exit 1)
+
+# Stage 2: Final image
+FROM ghcr.io/dbt-labs/dbt-postgres:$DBT_VERSION
+
+# Install essential tools and security updates
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    coreutils \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Install uv and move to standard location
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    mv /root/.local/bin/uv /usr/local/bin/uv && \
+    mv /root/.local/bin/uvx /usr/local/bin/uvx && \
+    uv --version
+
+# Set environment variable
+ENV DBT_PROFILES_DIR=/root/.dbt \
+    DBT_PROJECT_DIR=/usr/app \
+    ENVIRONMENT=prod
+
+# Set working directory
+WORKDIR ${DBT_PROJECT_DIR}
+
+# Install Python Dependencies using uv
+COPY pyproject.toml .
+RUN uv lock && uv sync --group dbt
+
+# --- Set Python Path Directly ---
+# Ensures /usr/app is searchable for python packages like 'api'
+# Overwrites any base image PYTHONPATH (usually not set or needed here)
+ENV PYTHONPATH=${DBT_PROJECT_DIR}
+
+# Copy profiles configuration
+COPY ./config/profiles.yml ${DBT_PROFILES_DIR}/profiles.yml
+
+# Copy dependencies from builder
+COPY --from=builder /build/dbt_packages ${DBT_PROJECT_DIR}/dbt_packages
+
+# Copy project configuration files
+COPY ./dbt_project.yml ${DBT_PROJECT_DIR}/dbt_project.yml
+COPY ./packages.yml ${DBT_PROJECT_DIR}/packages.yml
+
+# Copy project files (ordered by likelihood of changes)
+COPY ./dbt/macros ${DBT_PROJECT_DIR}/dbt/macros
+COPY ./dbt/tests ${DBT_PROJECT_DIR}/dbt/tests
+COPY ./dbt/snapshots ${DBT_PROJECT_DIR}/dbt/snapshots
+COPY ./dbt/analyses ${DBT_PROJECT_DIR}/dbt/analyses
+COPY ./dbt/models ${DBT_PROJECT_DIR}/dbt/models
+COPY ./api ${DBT_PROJECT_DIR}/api
+
+# Entry point for the application
+ENTRYPOINT ["dbt"]
+
+# Provide a default command (Optional, useful for running container without args)
+CMD ["--help"]
+

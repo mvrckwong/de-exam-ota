@@ -4,6 +4,8 @@ vars:
   SUDO: '{{if eq OS "linux"}}sudo {{end}}'
   COMPOSE_MB_FILE: compose.metabase.yml
   COMPOSE_AIRFLOW_FILE: compose.airflow-prod.yml
+  COMPOSE_DBT_FILE: compose.dbt.yml
+  COMPOSE_POSTGRES_FILE: compose.postgres.yml
 
 tasks:
   deploy_metabase:

@@ -1,73 +1,75 @@
-# Stage 1: Builder - Install dependencies
-ARG DBT_VERSION=1.9.0
-FROM ghcr.io/dbt-labs/dbt-redshift:$DBT_VERSION AS builder
+# This is a Docker Compose file for a dbt instance using Postgres in production.
+# <project>_<service>_<environment>
+name: exam_ota-dbt_postgres-prod
 
-# Set environment variable
-ENV BUILD_DIR=/build
+x-common-config:
+  &dbt-common-config
+  build:
+    context: .
+    dockerfile: Dockerfile.dbt
+  environment:
+    DBT_PROFILES_DIR: /root/.dbt
+    DBT_PROJECT_DIR: /usr/app
+    ENVIRONMENT: prod
+  volumes:
+    - ./dbt/models:/usr/app/dbt/models
+    - ./dbt/macros:/usr/app/dbt/macros
+    - ./dbt/tests:/usr/app/dbt/tests
+    - ./dbt/snapshots:/usr/app/dbt/snapshots
+    - ./dbt/analyses:/usr/app/dbt/analyses
+    - ./dbt/seeds:/usr/app/dbt/seeds
+    - ./target:/usr/app/target
+    - ./logs:/usr/app/logs
+  networks:
+    - dbt-network
+    - shared-db-network
 
-# Set working directory
-WORKDIR ${BUILD_DIR}
+services:
+  debug: # Check if it can connect to the datawarehouse, etc.
+    <<: *dbt-common-config
+    command: ["debug"]
+  
+  compile: # Compile the dbt models
+    <<: *dbt-common-config
+    command: ["compile"]
+    
+  api:
+    <<: *dbt-common-config
+    entrypoint: ["uv"]
+    networks:
+      - dbt-network
+      - shared-db-network
+      - shared-airflow-network
+    command: [
+        "run",
+        "uvicorn",
+        "api.server:app",
+        "--host", "0.0.0.0",
+        "--port", "10000",
+        "--workers", "2",
+        "--log-level", "info"
+      ]
+    ports:
+      - "10000:10000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10000/health"]
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: always
+    depends_on:
+      debug:
+        condition: service_completed_successfully
+      compile:
+        condition: service_completed_successfully
 
-# Copy necessary files
-COPY ./packages.yml ${BUILD_DIR}/packages.yml
-COPY ./dbt_project.yml ${BUILD_DIR}/dbt_project.yml
-
-# Run dbt deps
-RUN ["dbt", "deps"]
-
-# Check if dbt_packages exists
-RUN [ -d "dbt_packages" ] || (echo "dbt_packages directory not found" && exit 1)
-
-# Stage 2: Final image
-FROM ghcr.io/dbt-labs/dbt-redshift:$DBT_VERSION
-
-# Install essential tools and security updates
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    curl \
-    ca-certificates \
-    coreutils \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Set environment variable
-ENV DBT_PROFILES_DIR=/root/.dbt \
-    DBT_PROJECT_DIR=/usr/app \
-    ENVIRONMENT=prod
-
-# Set working directory
-WORKDIR ${DBT_PROJECT_DIR}
-
-# Install Python Dependencies for the API
-COPY requirements.txt .
-RUN python -m pip install --no-cache-dir -r requirements.txt
-
-# --- Set Python Path Directly ---
-# Ensures /usr/app is searchable for python packages like 'api'
-# Overwrites any base image PYTHONPATH (usually not set or needed here)
-ENV PYTHONPATH=${DBT_PROJECT_DIR}
-
-# Copy profiles configuration
-COPY ./config/profiles.yml ${DBT_PROFILES_DIR}/profiles.yml
-
-# Copy dependencies from builder
-COPY --from=builder /build/dbt_packages ${DBT_PROJECT_DIR}/dbt_packages
-
-# Copy project configuration files
-COPY ./dbt_project.yml ${DBT_PROJECT_DIR}/dbt_project.yml
-COPY ./packages.yml ${DBT_PROJECT_DIR}/packages.yml
-
-# Copy project files (ordered by likelihood of changes)
-COPY ./macros ${DBT_PROJECT_DIR}/macros
-COPY ./tests ${DBT_PROJECT_DIR}/tests
-COPY ./snapshots ${DBT_PROJECT_DIR}/snapshots
-COPY ./analyses ${DBT_PROJECT_DIR}/analyses
-COPY ./models ${DBT_PROJECT_DIR}/models
-COPY ./api ${DBT_PROJECT_DIR}/api
-
-# Entry point for the application
-ENTRYPOINT ["dbt"]
-
-# Provide a default command (Optional, useful for running container without args)
-CMD ["--help"]
+networks:
+  dbt-network:
+    driver: bridge
+  shared-db-network:
+    external: true
+    name: shared-db-network
+  shared-airflow-network:
+    external: true
+    name: shared-airflow-network
