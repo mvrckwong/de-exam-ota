@@ -1,4 +1,267 @@
+<a name="readme-top"></a>
+
 # Data Engineering Exam for OTA
 
-### Output
+> A modern data engineering pipeline for COVID-19 analytics using medallion architecture, demonstrating ETL best practices with dbt, Airflow, and Metabase.
 
+## 📋 Table of Contents
+
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Project Structure](#project-structure)
+- [Usage](#usage)
+- [Data Models](#data-models)
+- [Deployment](#deployment)
+- [Output Examples](#output-examples)
+
+## Overview
+
+This project implements a complete data engineering solution for COVID-19 data analysis, featuring:
+
+- **Medallion Architecture**: Silver (cleaned) and Gold (analytics-ready) layers
+- **Dimensional Modeling**: Fact tables with pre-calculated metrics and derived measures
+- **Modern Data Stack**: dbt for transformation, Airflow for orchestration, Metabase for visualization
+- **Infrastructure as Code**: Containerized deployment with Docker Compose
+
+## Architecture
+
+```
+┌─────────────────┐
+│   Data Source   │  COVID-19 Raw Data (US & Global)
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Silver Layer   │  Data Cleaning & Standardization
+│  (dbt models)   │  - silver_covid_cases_us
+└────────┬────────┘  - silver_covid_cases_global
+         │
+         ▼
+┌─────────────────┐
+│   Gold Layer    │  Business-Ready Analytics
+│  (dbt models)   │  ├── fct_covid_daily (fact table)
+│                 │  ├── agg_* (aggregations)
+│                 │  ├── mart_* (data marts)
+│                 │  └── rpt_* (reports)
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Metabase      │  Interactive Dashboards & Analytics
+└─────────────────┘
+```
+
+## Tech Stack
+
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| **Data Warehouse** | PostgreSQL 15 | Central data storage |
+| **Transformation** | dbt | Data modeling & transformation |
+| **Orchestration** | Apache Airflow | Workflow automation |
+| **Visualization** | Metabase | Business intelligence & dashboards |
+| **Container Runtime** | Docker Compose | Service orchestration |
+| **Task Automation** | Task (taskfile.yml) | Deployment automation |
+
+## Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) (with Docker Compose)
+- [Task](https://taskfile.dev/installation/) (task runner)
+- 8GB+ RAM recommended
+- Git
+
+## Quick Start
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd de-exam-ota
+   ```
+
+2. **Deploy PostgreSQL data warehouse**
+   ```bash
+   task deploy_postgres
+   ```
+
+3. **Run dbt transformations**
+   ```bash
+   task deploy_dbt
+   ```
+
+4. **Launch Metabase for visualization**
+   ```bash
+   task deploy_metabase
+   ```
+
+5. **Access Metabase**
+   - Open browser: `http://localhost:30001`
+   - Connect to PostgreSQL warehouse on port `50002`
+   - Credentials: `warehouse/warehouse/warehouse`
+
+## Project Structure
+
+```
+de-exam-ota/
+├── dbt/
+│   ├── models/
+│   │   ├── 01-silver/          # Cleaned, standardized data
+│   │   └── 02-gold/            # Analytics-ready models
+│   │       ├── fct_covid_daily.sql        # Core fact table
+│   │       ├── agg_*.sql                  # Pre-computed aggregations
+│   │       ├── mart_*.sql                 # Production data marts
+│   │       └── rpt_*.sql                  # Analytical reports
+│   ├── macros/                 # Reusable SQL functions
+│   └── tests/                  # Data quality tests
+├── dags/                       # Airflow DAG definitions
+├── compose.*.yml               # Docker Compose configurations
+├── taskfile.yml                # Task automation definitions
+└── README.md
+```
+
+## Usage
+
+### Available Tasks
+
+View all available tasks:
+```bash
+task --list
+```
+
+#### Core Deployment Commands
+
+```bash
+# Deploy individual services
+task deploy_postgres      # PostgreSQL data warehouse
+task deploy_dbt          # dbt transformations
+task deploy_metabase     # Metabase BI platform
+task deploy_airflow      # Airflow orchestration
+
+# Reload Python dependencies (Airflow)
+task reload_airflow_reqs
+```
+
+### Working with dbt
+
+Run dbt commands directly (requires dbt-core installed or via Docker):
+
+```bash
+# Run all models
+dbt run
+
+# Run specific layers
+dbt run --select 01-silver
+dbt run --select 02-gold
+
+# Run specific model tags
+dbt run --select tag:fact      # Fact tables only
+dbt run --select tag:mart      # Data marts only
+
+# Test data quality
+dbt test
+
+# Generate documentation
+dbt docs generate
+dbt docs serve
+```
+
+### Service Endpoints
+
+| Service | URL | Port | Credentials |
+|---------|-----|------|-------------|
+| Metabase | http://localhost:30001 | 30001 | Setup on first login |
+| Metabase DB | localhost | 50001 | `metabase/metabase` |
+| Warehouse | localhost | 50002 | `warehouse/warehouse` |
+| Airflow (if deployed) | http://localhost:8080 | 8080 | See compose file |
+
+## Data Models
+
+### Gold Layer Architecture
+
+The gold layer follows dimensional modeling best practices:
+
+#### **Fact Table**
+- `fct_covid_daily`: Central fact table with daily COVID-19 metrics
+  - **Grain**: One row per location per day
+  - Pre-calculated metrics (rolling averages, day-over-day changes)
+  - Derived measures (CFR, test positivity, severity classifications)
+
+#### **Data Marts** (Production)
+- `mart_top_countries`: Top countries by cases with rankings
+- `mart_covid_trends`: Time series trends with indicators
+- `mart_correlation_metrics`: Statistical correlation analysis
+
+#### **Aggregations** (Performance-Optimized)
+- `agg_daily_summary`: Daily national-level metrics
+- `agg_state_summary`: State-level comprehensive summaries
+- `agg_country_summary`: Country-level global analysis
+
+#### **Reports** (Analytical Exploration)
+- `rpt_top_countries_by_cases`: Frequency analysis
+- `rpt_covid_trends_over_time`: Temporal analysis
+- `rpt_correlation_analysis`: Statistical relationships
+
+**Naming Conventions:**
+- `fct_*` = Fact tables (granular data)
+- `mart_*` = Data marts (production-ready)
+- `agg_*` = Aggregations (pre-computed summaries)
+- `rpt_*` = Reports (ad-hoc analysis)
+
+See [`dbt/models/02-gold/README.md`](dbt/models/02-gold/README.md) for detailed documentation.
+
+## Deployment
+
+### Production Deployment
+
+The project uses Docker Compose with separate configurations for each service:
+
+```bash
+# Full stack deployment
+task deploy_postgres    # 1. Deploy warehouse first
+task deploy_dbt        # 2. Run transformations
+task deploy_metabase   # 3. Launch BI platform
+task deploy_airflow    # 4. Optional: orchestration
+```
+
+### Environment Variables
+
+Services use default credentials for development. For production, create `.env` file:
+
+```env
+# Warehouse PostgreSQL
+WAREHOUSE_POSTGRES_USER=warehouse
+WAREHOUSE_POSTGRES_PASSWORD=<secure-password>
+WAREHOUSE_POSTGRES_DB=warehouse
+
+# Metabase PostgreSQL
+MB_POSTGRES_USER=metabase
+MB_POSTGRES_PASSWORD=<secure-password>
+MB_POSTGRES_DB=metabase
+```
+
+### Health Checks
+
+All services include health checks. Verify status:
+
+```bash
+docker ps --format "table {{.Names}}\t{{.Status}}"
+```
+
+## Output Examples
+
+### Metabase Dashboard
+
+Production-ready analytics dashboard connected to the PostgreSQL warehouse (gold layer tables only):
+
+![Metabase Dashboard](/.images/output_v1.png)
+
+**Key Features:**
+- Top countries by confirmed cases
+- Time series trends with moving averages
+- Correlation analysis between key metrics
+- State-level and country-level summaries
+
+---
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>

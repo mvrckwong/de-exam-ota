@@ -18,6 +18,18 @@ tasks:
       - '{{.SUDO}}docker compose -f {{.COMPOSE_AIRFLOW_FILE}} down'
       - '{{.SUDO}}docker compose -f {{.COMPOSE_AIRFLOW_FILE}} up -d --build --remove-orphans --force-recreate'
 
+  deploy_dbt:
+    description: "Deploy the dbt server"
+    cmds:
+      - '{{.SUDO}}docker compose -f {{.COMPOSE_DBT_FILE}} down'
+      - '{{.SUDO}}docker compose -f {{.COMPOSE_DBT_FILE}} up -d --build --remove-orphans --force-recreate'
+
+  deploy_postgres:
+    description: "Deploy the postgres server"
+    cmds:
+      - '{{.SUDO}}docker compose -f {{.COMPOSE_POSTGRES_FILE}} down'
+      - '{{.SUDO}}docker compose -f {{.COMPOSE_POSTGRES_FILE}} up -d --build --remove-orphans --force-recreate'
+
   reload_airflow_reqs:
     description: "Update or reload the requirements.txt from pyproject.toml with airflow constraints."
     sources:
