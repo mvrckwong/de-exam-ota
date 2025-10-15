@@ -1,0 +1,11 @@
+exam_ota:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      user: warehouse
+      password: warehouse
+      host: 192.168.1.105
+      port: 50002
+      dbname: warehouse
+      schema: public
