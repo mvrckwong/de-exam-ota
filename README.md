@@ -116,6 +116,35 @@ We are going to be using ELT Architecture or Medallion Architecture. The archite
    - Open browser: `http://localhost:8080` for Airflow
    - Connect to PostgreSQL warehouse on port `50002`
 
+### Service Endpoints
+
+| Service | URL | Port | Credentials(User/Pass) |
+|---------|-----|------|-------------|
+| Metabase | http://localhost:30001 | 30001 | Setup on first login |
+| Metabase DB | localhost | 50001 | `metabase/metabase` |
+| Warehouse | localhost | 50002 | `warehouse/warehouse` |
+| Airflow | http://localhost:8080 | 8080 | `airflow/airflow` |
+
+### Available Tasks
+
+View all available tasks:
+```bash
+task --list
+```
+
+#### Core Deployment Commands
+
+```bash
+# Deploy individual services
+task deploy_postgres      # PostgreSQL data warehouse
+task deploy_dbt          # dbt transformations
+task deploy_metabase     # Metabase BI platform
+task deploy_airflow      # Airflow orchestration
+
+# Reload Python dependencies (Airflow)
+task reload_airflow_reqs
+```
+
 ## Current Setup (Personal Setup)
 
 Now, the containers looks like.
@@ -164,27 +193,7 @@ Inside Airflow, you have the following data pipeline. One is for ingesting the d
 
 ![Airflow Dags](/.images/output_dags_v1.png)
 
-### Available Tasks
-
-View all available tasks:
-```bash
-task --list
-```
-
-#### Core Deployment Commands
-
-```bash
-# Deploy individual services
-task deploy_postgres      # PostgreSQL data warehouse
-task deploy_dbt          # dbt transformations
-task deploy_metabase     # Metabase BI platform
-task deploy_airflow      # Airflow orchestration
-
-# Reload Python dependencies (Airflow)
-task reload_airflow_reqs
-```
-
-### Working with dbt
+### Working with dbt (Alternative way to run the models)
 
 Run dbt commands locally after syncing dependencies:
 
@@ -212,15 +221,6 @@ uv run dbt docs serve
 ```
 
 **Note:** You can also run dbt inside Docker containers using `task deploy_dbt` which handles dependencies automatically.
-
-### Service Endpoints
-
-| Service | URL | Port | Credentials |
-|---------|-----|------|-------------|
-| Metabase | http://localhost:30001 | 30001 | Setup on first login |
-| Metabase DB | localhost | 50001 | `metabase/metabase` |
-| Warehouse | localhost | 50002 | `warehouse/warehouse` |
-| Airflow (if deployed) | http://localhost:8080 | 8080 | See compose file |
 
 ## Data Models
 
