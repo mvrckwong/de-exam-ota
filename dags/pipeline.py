@@ -14,8 +14,8 @@ default_args = {
 
 with DAG(
      dag_id="ota-dbt",
-     dag_display_name='Run DBT Silver and Gold Models',
-     description='Run DBT Silver and Gold Models',
+     dag_display_name='Transform COVID-19 Data - Run Silver and Gold Models',
+     description='Transform COVID-19 Data - Run Silver and Gold Models',
      tags=['ota', 'dbt'],
      catchup=False,
      schedule=None,
