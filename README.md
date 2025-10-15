@@ -67,10 +67,11 @@ This project implements a complete data engineering solution for COVID-19 data a
 
 ## Prerequisites
 
-- [Docker](https://docs.docker.com/get-docker/) (with Docker Compose)
-- [Task](https://taskfile.dev/installation/) (task runner)
-- 8GB+ RAM recommended
-- Git
+- **[Docker](https://docs.docker.com/get-docker/)** - Container runtime for running all services (PostgreSQL, Metabase, Airflow) in isolated environments
+- **[uv](https://docs.astral.sh/uv/getting-started/installation/)** - Fast Python package manager for managing dependencies and virtual environments.
+- **[Task](https://taskfile.dev/installation/)** - Task runner for automating deployment commands and workflows
+- **Git** - Version control for cloning the repository
+- **8GB+ RAM** - Recommended for running multiple Docker containers simultaneously
 
 ## Quick Start
 
@@ -80,22 +81,28 @@ This project implements a complete data engineering solution for COVID-19 data a
    cd de-exam-ota
    ```
 
-2. **Deploy PostgreSQL data warehouse**
+2. **Install Python dependencies**
+   ```bash
+   # Sync dbt and its dependencies using uv
+   uv sync --group dbt
+   ```
+
+3. **Deploy PostgreSQL data warehouse**
    ```bash
    task deploy_postgres
    ```
 
-3. **Run dbt transformations**
+4. **Run dbt transformations**
    ```bash
    task deploy_dbt
    ```
 
-4. **Launch Metabase for visualization**
+5. **Launch Metabase for visualization**
    ```bash
    task deploy_metabase
    ```
 
-5. **Access Metabase**
+6. **Access Metabase**
    - Open browser: `http://localhost:30001`
    - Connect to PostgreSQL warehouse on port `50002`
    - Credentials: `warehouse/warehouse/warehouse`
@@ -144,27 +151,32 @@ task reload_airflow_reqs
 
 ### Working with dbt
 
-Run dbt commands directly (requires dbt-core installed or via Docker):
+Run dbt commands locally after syncing dependencies:
 
 ```bash
+# First time setup: Sync dbt and its dependencies
+uv sync --group dbt
+
 # Run all models
-dbt run
+uv run dbt run
 
 # Run specific layers
-dbt run --select 01-silver
-dbt run --select 02-gold
+uv run dbt run --select 01-silver
+uv run dbt run --select 02-gold
 
 # Run specific model tags
-dbt run --select tag:fact      # Fact tables only
-dbt run --select tag:mart      # Data marts only
+uv run dbt run --select tag:fact      # Fact tables only
+uv run dbt run --select tag:mart      # Data marts only
 
 # Test data quality
-dbt test
+uv run dbt test
 
 # Generate documentation
-dbt docs generate
-dbt docs serve
+uv run dbt docs generate
+uv run dbt docs serve
 ```
+
+**Note:** You can also run dbt inside Docker containers using `task deploy_dbt` which handles dependencies automatically.
 
 ### Service Endpoints
 
@@ -255,6 +267,10 @@ docker ps --format "table {{.Names}}\t{{.Status}}"
 Production-ready analytics dashboard connected to the PostgreSQL warehouse (gold layer tables only):
 
 ![Metabase Dashboard](/.images/output_v1.png)
+
+Some of docker compose files are deployed inside a portainer and/or server using TrueNAS.
+
+![Docker Containers](/.images/output_server_containers_v1.png)
 
 **Key Features:**
 - Top countries by confirmed cases
