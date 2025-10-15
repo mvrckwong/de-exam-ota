@@ -1,4 +1,4 @@
-name: airflow
+name: airflow-ota
 
 x-airflow-common:
     &airflow-common
@@ -6,78 +6,57 @@ x-airflow-common:
         context: ./.devcontainer
         dockerfile: Dockerfile.airflow
     environment:
-      &airflow-common-env
-      AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
-      
-      # CRITICAL: Same secret key everywhere - hardcoded
-      AIRFLOW__WEBSERVER__SECRET_KEY: 'aB3dF9kL2mN8pQ5rS7tV0wX4yZ6cE1gH3jK5nM7pR9sT2vW4xY6zA8bD0eF2gH4j'
-      AIRFLOW__API__SECRET_KEY: 'aB3dF9kL2mN8pQ5rS7tV0wX4yZ6cE1gH3jK5nM7pR9sT2vW4xY6zA8bD0eF2gH4j'
-      AIRFLOW__API_AUTH__JWT_SECRET: 'aB3dF9kL2mN8pQ5rS7tV0wX4yZ6cE1gH3jK5nM7pR9sT2vW4xY6zA8bD0eF2gH4j'
+        &airflow-common-env
+        AIRFLOW_CONFIG: '${AIRFLOW_HOME}/config/airflow.cfg'
+        AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_KEY}
 
-      # Core Settings
-      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
-      AIRFLOW__CORE__FERNET_KEY: ''
-      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
-      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
-      AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://api-server:8080/execution/'
-      AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
-      
-      # API Settings - SINGLE WORKER IS THE KEY
-      AIRFLOW__API__HOST: '0.0.0.0'
-      AIRFLOW__API__PORT: '8080'
-      AIRFLOW__API__WORKERS: '1'
-      AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.session'
-      AIRFLOW__API__ENABLE_EXPERIMENTAL_API: 'false'
-      
-      # Database Settings
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+        # Core Settings
+        AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+        AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
+        AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+        AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+        AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://api-server:8080/execution/'
+        AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+        
+        # Database Settings (Using variables from .env)
+        AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}/${POSTGRES_DB}
 
-      # Celery Settings
-      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
-      AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
-      
-      # Scheduler Settings
-      AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+        # Celery Settings (Using variables from .env)
+        AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}/${POSTGRES_DB}
+        AIRFLOW__CELERY__BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+        
+        # Scheduler Settings
+        AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
 
-      # Webserver Settings
-      AIRFLOW__WEBSERVER__BASE_URL: 'http://192.168.1.105:8080'
-      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'false'
-      AIRFLOW__WEBSERVER__RATELIMIT_ENABLED: 'false'
-      
-      # Session - Use Redis to share across workers
-      AIRFLOW__WEBSERVER__SESSION_BACKEND: 'redis'
-      AIRFLOW__WEBSERVER__SESSION_REDIS_HOST: 'redis'
-      AIRFLOW__WEBSERVER__SESSION_REDIS_PORT: '6379'
-      AIRFLOW__WEBSERVER__SESSION_REDIS_DB: '2'
-      AIRFLOW__WEBSERVER__SESSION_LIFETIME_DAYS: '30'
-      
-      # Cookie Settings - Critical for network IP access
-      AIRFLOW__WEBSERVER__SESSION_COOKIE_SAMESITE: 'Lax'
-      AIRFLOW__WEBSERVER__SESSION_COOKIE_SECURE: 'false'
-      AIRFLOW__WEBSERVER__SESSION_COOKIE_HTTPONLY: 'true'
-      AIRFLOW__WEBSERVER__COOKIE_SECURE: 'false'
-      AIRFLOW__WEBSERVER__COOKIE_SAMESITE: 'Lax'
-      
-      # Proxy Settings
-      AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: 'true'
-      AIRFLOW__WEBSERVER__PROXY_FIX_X_FOR: '1'
-      AIRFLOW__WEBSERVER__PROXY_FIX_X_PROTO: '1'
-      AIRFLOW__WEBSERVER__PROXY_FIX_X_HOST: '1'
-      AIRFLOW__WEBSERVER__PROXY_FIX_X_PORT: '1'
-      AIRFLOW__WEBSERVER__PROXY_FIX_X_PREFIX: '1'
-      
-      # FAB Settings
-      AIRFLOW__FAB__UPDATE_FAB_PERMS: 'true'
-      AIRFLOW__FAB__AUTH_RATE_LIMITED: 'false'
-      
-      HOST_IP: 'host.docker.internal'
+        # Webserver Settings (Using variables from .env)
+        AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_WEBSERVER_KEY}
+        AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'false'
+        AIRFLOW__WEBSERVER__RATELIMIT_STORAGE_URI: "redis://:${REDIS_PASSWORD}@redis:6379/1"
 
+        # Test
+        AIRFLOW__WEBSERVER__WEB_SERVER_HOST: 0.0.0.0
+
+        # Optional: Statsd settings for monitoring
+        # AIRFLOW__METRICS__STATSD_ON: 'true'
+        # AIRFLOW__METRICS__STATSD_HOST: 'statsd-exporter'
+        # AIRFLOW__METRICS__STATSD_PORT: '8125'
+        # AIRFLOW__METRICS__STATSD_PREFIX: 'airflow'
+
+        # Optional: Add other production configurations like logging, remote task handlers, etc.
+        # AIRFLOW__LOGGING__REMOTE_LOGGING: 'true'
+        # AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER: 's3://my-airflow-logs-bucket/logs'
+        # AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID: 'aws_default'
+        
+        HOST_IP: ${HOST_IP:-host.docker.internal}
     volumes:
-        - ./dags:/opt/airflow/dags
-        - ./logs:/opt/airflow/logs
-        - ./config:/opt/airflow/config
-        - ./plugins:/opt/airflow/plugins
-    user: "50000:0"
+        - ${AIRFLOW_PROJ_DIR}/dags:${AIRFLOW_HOME}/dags
+        - ${AIRFLOW_PROJ_DIR}/config:${AIRFLOW_HOME}/config
+        - ${AIRFLOW_PROJ_DIR}/plugins:${AIRFLOW_HOME}/plugins
+        - ${AIRFLOW_PROJ_DIR}/logs:${AIRFLOW_HOME}/logs
+    user: 
+        "${AIRFLOW_UID:-50000}:0"
+    env_file:
+        - .env
     depends_on:
         &airflow-common-depends-on
         redis:
@@ -87,21 +66,27 @@ x-airflow-common:
     networks:
         - airflow-network
         - shared-airflow-network
+    extra_hosts:
+        - "host.docker.internal:host-gateway"
 
 services:
     postgres:
         image: postgres:13
+        user: "${POSTGRES_TARGET_UID:-999}:${POSTGRES_TARGET_GID:-999}"
+        ports:
+            - "${PORT_POSTGRES}:5432"
         environment:
-            POSTGRES_USER: airflow
-            POSTGRES_PASSWORD: airflow
-            POSTGRES_DB: airflow
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_HOST: ${POSTGRES_HOST}
         volumes:
             - postgres-db-volume:/var/lib/postgresql/data
         healthcheck:
-          test: ["CMD", "pg_isready", "-U", "airflow"]
-          interval: 10s
-          retries: 5
-          start_period: 5s
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+            interval: 10s
+            retries: 10
+            start_period: 5s
         restart: always
         networks:
             - shared-db-network
@@ -109,14 +94,16 @@ services:
 
     redis:
         image: redis:7.2-bookworm
+        command: 
+            ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
         expose:
-          - 6379
+            - 6379
         healthcheck:
-          test: ["CMD", "redis-cli", "ping"]
-          interval: 10s
-          timeout: 30s
-          retries: 50
-          start_period: 30s
+            test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+            interval: 10s
+            timeout: 10s
+            retries: 10
+            start_period: 5s
         restart: always
         networks:
             - airflow-network
@@ -125,7 +112,7 @@ services:
         <<: *airflow-common
         command: ["api-server"]
         ports:
-          - "8080:8080"
+          - "${PORT_AIRFLOW}:8080"
         healthcheck:
             test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/version"]
             interval: 30s
@@ -181,6 +168,8 @@ services:
             start_period: 30s
         environment:
             <<: *airflow-common-env
+            # Required to handle warm shutdown of the celery workers properly
+            # See https://airflow.apache.org/docs/docker-stack/entrypoint.html#signal-propagation
             DUMB_INIT_SETSID: "0"
         restart: always
         depends_on:
@@ -253,15 +242,15 @@ services:
             echo "   https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html#before-you-begin"
             echo
             fi
-            mkdir -p /opt/airflow/{logs,dags,plugins,config}
-            chown -R "50000:0" /opt/airflow/{logs,dags,plugins,config}
+            mkdir -p ${AIRFLOW_HOME}/{logs,dags,plugins,config}
+            chown -R "${AIRFLOW_UID}:0" ${AIRFLOW_HOME}/{logs,dags,plugins,config}
             exec /entrypoint airflow version
         environment:
             <<: *airflow-common-env
-            _AIRFLOW_DB_MIGRATE: 'true'
-            _AIRFLOW_WWW_USER_CREATE: 'true'
-            _AIRFLOW_WWW_USER_USERNAME: 'airflow'
-            _AIRFLOW_WWW_USER_PASSWORD: 'airflow'
+            _AIRFLOW_DB_MIGRATE: ${_AIRFLOW_DB_MIGRATE}
+            _AIRFLOW_WWW_USER_CREATE: ${_AIRFLOW_WWW_USER_CREATE}
+            _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME}
+            _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD}
         user: "0:0"
         restart: "no"
 
@@ -279,11 +268,11 @@ services:
 
     flower:
         <<: *airflow-common
-        command: ["celery", "flower"]
+        command: ["celery", "flower", "--basic-auth=${FLOWER_USER}:${FLOWER_PASSWORD}"]
         profiles:
             - debug
         ports:
-            - "5555:5555"
+            - "${PORT_FLOWER}:5555"
         healthcheck:
             test: ["CMD", "curl", "--fail", "http://localhost:5555/"]
             interval: 30s
@@ -296,10 +285,12 @@ services:
             init:
                 condition: service_completed_successfully
 
+# Define internal and external networks
 networks:
     airflow-network:
         driver: bridge
         name: airflow-internal-network
+    # For Backups and Restores
     shared-db-network:
         driver: bridge
         name: shared-db-network
@@ -307,5 +298,6 @@ networks:
         driver: bridge
         name: shared-airflow-network
 
+# Define named volumes
 volumes:
     postgres-db-volume:

@@ -1,5 +1,5 @@
 [project]
-name = "data-engineering-workflow"
+name = "data-engineering-workflow-ota"
 version = "0.1.0"
 description = "Data Engineering Workflow."
 readme = "README.md"

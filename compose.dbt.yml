@@ -1,6 +1,6 @@
 # This is a Docker Compose file for a dbt instance using Postgres in production.
 # <project>_<service>_<environment>
-name: exam_ota-dbt_postgres-prod
+name: dbt-ota
 
 x-common-config:
   &dbt-common-config
