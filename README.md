@@ -287,6 +287,12 @@ For this example or repository, the environment variables is placed under the .e
 
 ## Output Examples
 
+### Data Processes
+
+![Ingestion Process](/.images/output_ingestion_v1.png)
+
+![Transformation Process](/.images/output_transformation_v1.png)
+
 ### Metabase Dashboard
 
 Production-ready analytics dashboard connected to the PostgreSQL warehouse (gold layer tables only):
