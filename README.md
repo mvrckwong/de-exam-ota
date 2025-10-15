@@ -122,7 +122,7 @@ Now, the containers looks like.
 
 ![Docker Desktop Containers](/.images/output_containers.png)
 
-Some of docker compose files or containers are deployed inside a portainer and/or server using TrueNAS.
+Some of my containers are deployed inside a Portainer and server using TrueNAS.
 
 ![Docker Containers](/.images/output_server_containers_v1.png)
 
